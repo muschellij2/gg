@@ -81,23 +81,7 @@ server <- function(input, output) {
   data_sn=reactive({
     colCumsums(dat())
   })
-  # data_sn_x=reactive(
-  #   as.data.frame(cbind(data_sn(),n = c(1:10000)))
-  # )
-  # sn=reactive(melt(data_sn_x(),id='n'))
-  # 
-  # data_sn_n=reactive({
-  #   # sn = data_sn()
-  #   # sn / seq(nrow(sn))
-  #   data_sn() / seq(nrow(data_sn()))
-  #   })
  
-  # data_sn_n_x=reactive(
-  #   as.data.frame(cbind(data_sn_n(),c(1:10000)))
-  # )
-  # sn_n=reactive({
-  #   melt(data_sn_n_x(),id='n')
-  # })
   sn_df=reactive({
     df = data_sn()
     df = data.frame(df, n = 1:nrow(df))
@@ -141,12 +125,7 @@ server <- function(input, output) {
     }
   }
   
-  # data_sn_sqn=reactive(apply(matrix(dat(),nrow=10000),2,
-  #                                                function(x) cumsum(x)/sqrt(seq_along(x)*max(1,log(log(seq_along(x)))))
-  #                                   ))
-  # data_sn_sqn_x=reactive(as.data.frame(cbind(data_sn_sqn(),c(1:10000))))
-  # sn_sqn=reactive(melt(data_sn_sqn_x(),id='n'))
-  output$plot1=renderPlot({
+    output$plot1=renderPlot({
     gg() + aes(y = sn)
   })
   output$plot2=renderPlot({
@@ -159,7 +138,6 @@ server <- function(input, output) {
   ############
   output$plot3=renderPlot({
     gg() + aes(y = sn_n)
-    # ggplot(data=sn_n(),aes(x=n,y=value, group = variable))+geom_line(alpha=0.05)
   })
   output$plot4=renderPlot({
     data = sn_last_n()
@@ -171,7 +149,6 @@ server <- function(input, output) {
   ############
   output$plot5=renderPlot({
     gg() + aes(y = sn_sqrtn)
-    # ggplot(data=sn_n(),aes(x=n,y=value, group = variable))+geom_line(alpha=0.05)
   })
   output$plot6=renderPlot({
     data = sn_last_n()
@@ -182,7 +159,6 @@ server <- function(input, output) {
   ############
   output$plot7=renderPlot({
     gg() + aes(y = sn_loglog)
-    # ggplot(data=sn_n(),aes(x=n,y=value, group = variable))+geom_line(alpha=0.05)
   })
   output$plot8=renderPlot({
     data = sn_last_n()
