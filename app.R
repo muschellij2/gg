@@ -3,6 +3,7 @@ library(ggplot2)
 library(reshape2)
 library(matrixStats)
 
+
 ui <- fluidPage(
   titlePanel("Law of iterated logarithm"),
   sidebarLayout(
