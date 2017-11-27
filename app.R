@@ -2,9 +2,14 @@ library(shiny)
 library(ggplot2)
 library(reshape2)
 library(matrixStats)
+library(markdown)
+setwd("~/Desktop/term2/shiny/gg")
 
-
-ui <- fluidPage(
+ui <-  shinyUI(navbarPage("My App",
+                          tabPanel("Instructions", fluidPage(
+                            uiOutput('instructions')
+                          )),
+                          tabPanel("App", fluidPage(
   titlePanel("Law of iterated logarithm"),
   sidebarLayout(
     sidebarPanel(
@@ -41,6 +46,12 @@ ui <- fluidPage(
     )
   )
 )
+)
+)
+)
+
+
+
 
 server <- function(input, output) {
   DistX <- reactive( input$dist )
@@ -162,7 +173,11 @@ server <- function(input, output) {
   })
   output$plot8=renderPlot({
     data = sn_last_n()
-    run_hist(data$sn_loglog,main='Histogram of sn/sqrt(nloglogn', xlim = hist_lims())    
+    run_hist(data$sn_loglog,main='Histogram of sn/sqrt(nloglogn)', xlim = hist_lims())    
+  })
+  
+  output$instructions <- renderUI({
+    includeMarkdown('info.md')
   })
 }
 shinyApp(ui = ui, server = server)
