@@ -3,11 +3,10 @@ library(ggplot2)
 library(reshape2)
 library(matrixStats)
 library(markdown)
-setwd("~/Desktop/term2/shiny/gg")
 
-ui <-  shinyUI(navbarPage("My App",
-                          tabPanel("Instructions", fluidPage(
-                            uiOutput('instructions')
+ui <-  shinyUI(navbarPage("Law of the Iterated Logarithm",
+                          tabPanel("Descriptions", fluidPage(
+                            uiOutput('descriptions')
                           )),
                           tabPanel("App", fluidPage(
   titlePanel("Law of iterated logarithm"),
@@ -176,8 +175,8 @@ server <- function(input, output) {
     run_hist(data$sn_loglog,main='Histogram of sn/sqrt(nloglogn)', xlim = hist_lims())    
   })
   
-  output$instructions <- renderUI({
-    includeMarkdown('info.md')
+  output$descriptions <- renderUI({
+    withMathJax(includeMarkdown('info.md'))
   })
 }
 shinyApp(ui = ui, server = server)
