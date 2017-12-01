@@ -30,18 +30,23 @@ ui <-  shinyUI(navbarPage("Law of the Iterated Logarithm",
       conditionalPanel(
         condition = "input.dist == 'poisson'",
         numericInput("lambda", "lambda: ", min=1, max=10, value=5, step=0.5)),
-      checkboxInput("fix_x", "Fix x-axis in histogram")
+      checkboxInput("fix_x", "Fix x-axis in histogram", value = TRUE),
+      actionButton('go','Go')
     ),
     # Show a plot of the generated distribution
     mainPanel(
-      plotOutput('plot1'),
-      plotOutput('plot2'),
+      h2("Plot of Sum divided by n"),
       plotOutput('plot3'),
       plotOutput('plot4'),
+      h2(withMathJax("$$\\text{Plot of Sum divided by }\\sqrt{n}$$")),
       plotOutput('plot5'),
       plotOutput('plot6'),
+      withMathJax(h2( "$$\\text{Plot of Sum divided by }\\sqrt{n \\log\\log(n)}$$")),
       plotOutput('plot7'),
-      plotOutput('plot8')
+      plotOutput('plot8'),
+      h2("Plot of Sum of n variables"),
+      plotOutput('plot1'),
+      plotOutput('plot2')
     )
   )
 )
@@ -54,45 +59,46 @@ ui <-  shinyUI(navbarPage("Law of the Iterated Logarithm",
 
 server <- function(input, output) {
   DistX <- reactive( input$dist )
-  nX <- reactive( input$nX )
-  paramsX <- reactive(  {
+  nX <- eventReactive (input$go,{input$nX })
+  
+  paramsX <- eventReactive (input$go,{
     switch(DistX(),
            "normal" = list(mean=input$mean, sd=input$sd),
            "bernoulli" = list(size=1,prob=input$p),
            "poisson" = list(lambda=input$lambda)
     )} )
-  rdistX <- reactive(  {
+  rdistX <- eventReactive (input$go,{
     switch(DistX(),
            "normal" = "rnorm",
            "bernoulli" = "rbinom",
            "poisson" = "rpois"
     )} )
-  mean.dist=reactive({
+  mean.dist=eventReactive (input$go,{
     switch(DistX(),
            "normal" = input$mean,
            "bernoulli" = input$p,
            "poisson" = input$lambda
     )})
-  sd.dist=reactive({
+  sd.dist=eventReactive (input$go,{
     switch(DistX(),
            "normal" = input$sd,
            "bernoulli" = sqrt(input$p*(1-input$p)),
            "poisson" = sqrt(input$lambda)
     )})
-  sampleDistX=reactive({
+  sampleDistX=eventReactive (input$go,{
     res = do.call(rdistX(), c(10000*200, paramsX()))
     res = matrix(res,nrow=10000)
     res
   })
-  dat=reactive({
+  dat=eventReactive (input$go,{
     (sampleDistX()-mean.dist())/sd.dist()
     })
   
-  data_sn=reactive({
+  data_sn=eventReactive (input$go,{
     colCumsums(dat())
   })
  
-  sn_df=reactive({
+  sn_df=eventReactive (input$go,{
     df = data_sn()
     df = data.frame(df, n = 1:nrow(df))
     long = melt(df,id='n', value.name = "sn")
@@ -102,25 +108,27 @@ server <- function(input, output) {
     long$sn_loglog = long$sn / sqrt(long$n * long$loglog)
     
     # subset data
-    long = long[ (long$n %% 10 == 0),]
+    long = long[ (long$n %% 50 == 0),]
     long
   })
-  sn_last_n = reactive({
+  sn_last_n = eventReactive (input$go,{
     long = sn_df()
     long = long[ long$n == max(long$n), ]
     long
   })
   
-  gg = reactive({
+  gg = eventReactive (input$go,{
     ggplot(data=sn_df(), aes(x=n, group = variable)) + 
       geom_line(alpha=0.05)
+   
   })
   
-  hist_lims = reactive({
+  hist_lims = eventReactive (input$go,{
     if (input$fix_x) {
       data = sn_last_n()
       lim = range(c(data$sn_n, data$sn_sqrtn, 
                     data$sn_loglog))
+      lim = range(floor(lim), ceiling(lim))
     } else {
       lim = NULL
     }
@@ -136,45 +144,53 @@ server <- function(input, output) {
   }
   
     output$plot1=renderPlot({
-    gg() + aes(y = sn)
+    gg() + aes(y = sn)+xlab('n')+ylab('Sum of n variables')
   })
-  output$plot2=renderPlot({
+
+    output$plot2=renderPlot({
     data = sn_last_n()
-    hist(data$sn,main='Histogram of sn')
+    hist(data$sn,main='Histogram of sn',xlab='Sn')
   })
-  
+
   ############
   # S_n / n plots
   ############
-  output$plot3=renderPlot({
+  observeEvent(input$go,{
+    output$plot3=renderPlot({
     gg() + aes(y = sn_n)
   })
-  output$plot4=renderPlot({
+})
+
+  observeEvent(input$go,{
+    output$plot4=renderPlot({
     data = sn_last_n()
     run_hist(data$sn_n,main='Histogram of sn/n', xlim = hist_lims())    
          })
-  
+  })
   ############
   # S_n / sqrt(n) plots
   ############
-  output$plot5=renderPlot({
+    output$plot5=renderPlot({
     gg() + aes(y = sn_sqrtn)
   })
-  output$plot6=renderPlot({
+
+    output$plot6=renderPlot({
     data = sn_last_n()
     run_hist(data$sn_sqrtn,main='Histogram of sn/sqrt(n)', xlim = hist_lims())    
   })
+
   ############
   # S_n / sqrt(n loglog(n)) plots
   ############
-  output$plot7=renderPlot({
+    output$plot7=renderPlot({
     gg() + aes(y = sn_loglog)
   })
-  output$plot8=renderPlot({
+
+    output$plot8=renderPlot({
     data = sn_last_n()
     run_hist(data$sn_loglog,main='Histogram of sn/sqrt(nloglogn)', xlim = hist_lims())    
   })
-  
+
   output$descriptions <- renderUI({
     withMathJax(includeMarkdown('info.md'))
   })

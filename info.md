@@ -12,10 +12,12 @@ Let $X_1,X_2$,.. be iid rv's with mean 0 and std 1. Let $S_n = X_1+..+X_n$. By t
 
 $S_n/{n}\to 0$ almost surely
 
-and by the central limit theorem we have
+and by the central limit theorem we have $S_n/\sqrt{n}$ converges in distribution to a standard normal random variable. 
 
-$S_n/\sqrt{n}$ converges in distribution to a standard normal random variable. So in some sense $S_n/n$ "squeezes" down to one
-point whereas $S_n/\sqrt{n}$ "spreads out", roughly between -3 and 3. It is a reasonable question then whether there is an
+So in some sense $S_n/n$ "squeezes" down to one
+point whereas $S_n/\sqrt{n}$ "spreads out", roughly between -3 and 3, but a continous distirbution. 
+
+It is a reasonable question then whether there is an
 in-between case, namely a sequence ${a_n}$ such that $\sqrt{n}$<$a_n$<$n$ converges to something between a constant and a distribution. The answer is given by
 
 Theorem (Law of the Iterated Logarithm, Kolmogorov 1929)
