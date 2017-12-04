@@ -35,16 +35,17 @@ ui <-  shinyUI(navbarPage("Law of the Iterated Logarithm",
     ),
     # Show a plot of the generated distribution
     mainPanel(
-      h2("Plot of Sum divided by n"),
+      withMathJax(h6('$$\\text{The simulation generates 200 iid random variables with 10,000 replicats.}$$')),
+      withMathJax(h6('$$\\text{The sum of the random variables } S_n\\text{are calculated,and}~ S_n~ \\text{are dependent for i =1,2,..n}~ S_n\\text{,} S_n/n \\text{,}~ S_n/\\sqrt{n}\\text{and}~ S_n/\\sqrt{n \\log\\log(n)} \\text{are plotted.}$$')),
+      withMathJax(h6('$$\\text{The histograms shows the corresponding distribution of the last replicate.}$$')),
       plotOutput('plot3'),
       plotOutput('plot4'),
-      h2(withMathJax("$$\\text{Plot of Sum divided by }\\sqrt{n}$$")),
       plotOutput('plot5'),
       plotOutput('plot6'),
-      withMathJax(h2( "$$\\text{Plot of Sum divided by }\\sqrt{n \\log\\log(n)}$$")),
+     # withMathJax(h2( "$$\\text{Plot of Sum divided by }\\sqrt{n \\log\\log(n)}$$")),
       plotOutput('plot7'),
       plotOutput('plot8'),
-      h2("Plot of Sum of n variables"),
+      #h2("Plot of Sum of n variables"),
       plotOutput('plot1'),
       plotOutput('plot2')
     )
@@ -119,8 +120,11 @@ server <- function(input, output) {
   
   gg = eventReactive (input$go,{
     ggplot(data=sn_df(), aes(x=n, group = variable)) + 
-      geom_line(alpha=0.05)
-   
+      geom_line(alpha=0.1) +
+      theme(axis.title=element_text(size=30),
+          axis.text=element_text(size=21,face="bold"),
+          title=element_text(size=25)) 
+      
   })
   
   hist_lims = eventReactive (input$go,{
@@ -144,51 +148,59 @@ server <- function(input, output) {
   }
   
     output$plot1=renderPlot({
-    gg() + aes(y = sn)+xlab('n')+ylab('Sum of n variables')
+    gg() + aes(y = sn)+xlab('n')+ylab('Sn')+ ggtitle('Sum of n variables')
   })
 
     output$plot2=renderPlot({
     data = sn_last_n()
-    hist(data$sn,main='Histogram of sn',xlab='Sn')
+    hist(data$sn,main='Histogram of Sn',xlab='Sn',ylab='Frequency',
+         cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2)
   })
 
   ############
   # S_n / n plots
   ############
+    
   observeEvent(input$go,{
     output$plot3=renderPlot({
-    gg() + aes(y = sn_n)
+    gg() + aes(y = sn_n)+xlab('n')+ylab('Sn/n')+ ggtitle('Plot of Sum divided by n')
   })
 })
 
   observeEvent(input$go,{
     output$plot4=renderPlot({
     data = sn_last_n()
-    run_hist(data$sn_n,main='Histogram of sn/n', xlim = hist_lims())    
+    run_hist(data$sn_n,main='Histogram of sn/n', xlim = hist_lims(),xlab='Sn',
+             ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2)
+
          })
   })
   ############
   # S_n / sqrt(n) plots
   ############
-    output$plot5=renderPlot({
-    gg() + aes(y = sn_sqrtn)
-  })
 
+    output$plot5=renderPlot({
+    gg() + aes(y = sn_sqrtn)+xlab('n')+ylab(withMathJax('$$S_n/\\sqrt{n}$$'))+ggtitle(withMathJax("$$\\text{Plot of Sum divided by }\\sqrt{n}$$"))+
+          geom_hline(yintercept =c(-3,3),color='blue')
+    }) 
+  
     output$plot6=renderPlot({
     data = sn_last_n()
-    run_hist(data$sn_sqrtn,main='Histogram of sn/sqrt(n)', xlim = hist_lims())    
+    run_hist(data$sn_sqrtn,main='Histogram of sn/sqrt(n)', xlim = hist_lims(),
+             xlab='Sn',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2)    
   })
 
   ############
   # S_n / sqrt(n loglog(n)) plots
   ############
     output$plot7=renderPlot({
-    gg() + aes(y = sn_loglog)
+    gg() + aes(y = sn_loglog)+geom_hline(yintercept =c(-sqrt(2),sqrt(2)),color='blue')
   })
 
     output$plot8=renderPlot({
     data = sn_last_n()
-    run_hist(data$sn_loglog,main='Histogram of sn/sqrt(nloglogn)', xlim = hist_lims())    
+    run_hist(data$sn_loglog,main='Histogram of sn/sqrt(nloglogn)', xlim = hist_lims(),
+             xlab='Sn',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2)    
   })
 
   output$descriptions <- renderUI({
