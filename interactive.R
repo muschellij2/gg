@@ -42,3 +42,22 @@ gfac = g +  facet_wrap(~ type)
 gfac_col  = g +  facet_wrap(~ type, ncol = 1)
 gfac_col
 # ggplotly(gfac_col)
+
+stats = longer %>% 
+  group_by(n) %>% 
+  summarize(
+    mean = mean(value),
+    min = min(value),
+    q25 = quantile(value, probs = 0.25),
+    q50 = median(value),
+    q75 = quantile(value, probs = 0.75),
+    max = max(value)
+  ) %>% 
+  gather(type, value, -n)
+
+  
+g = stats %>% 
+  ggplot(aes(x = n, y = value, colour = type)) +
+  geom_line()
+g
+
