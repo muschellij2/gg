@@ -36,7 +36,8 @@ ui <-  shinyUI(navbarPage("Law of the Iterated Logarithm",
     # Show a plot of the generated distribution
     mainPanel(
       withMathJax(h6('$$\\text{The simulation generates 200 iid random variables with 10,000 replicats.}$$')),
-      withMathJax(h6('$$\\text{The sum of the random variables } S_n~\\text{are calculated,and}~ S_n~ \\text{are dependent for i =1,2,..n.}~~S_n\\text{,}~S_n/n\\text{,}~ S_n/\\sqrt{n}~\\text{and}~ S_n/\\sqrt{n \\log\\log(n)}~\\text{are plotted.}$$')),
+      withMathJax(h6('$$\\text{The sum of the random variables } S_n~\\text{are calculated,and}~ S_n~ \\text{are dependent for i =1,2,..n.}$$')),
+      withMathJax(h6('$$S_n\\text{,}~S_n/n\\text{,}~ S_n/\\sqrt{n}~\\text{and}~ S_n/\\sqrt{n \\log\\log(n)}~\\text{are plotted.}$$')),
       withMathJax(h6('$$\\text{The histograms shows the corresponding distribution of the last replicate.}$$')),
       plotOutput('plot3'),
       plotOutput('plot4'),
@@ -120,7 +121,7 @@ server <- function(input, output) {
   
   gg = eventReactive (input$go,{
     ggplot(data=sn_df(), aes(x=n, group = variable)) + 
-      geom_line(alpha=0.1) +
+      geom_line(alpha=0.1,color='hotpink') +
       theme(axis.title=element_text(size=30),
           axis.text=element_text(size=21,face="bold"),
           title=element_text(size=25)) 
@@ -142,8 +143,10 @@ server <- function(input, output) {
   run_hist = function(data, xlim, ...) {
     if (is.null(xlim)) {
       hist(data, ...)
+
     } else {
       hist(data, xlim = xlim, ...)
+
     }
   }
   
@@ -154,7 +157,7 @@ server <- function(input, output) {
     output$plot2=renderPlot({
     data = sn_last_n()
     hist(data$sn,main='Histogram of Sn',xlab='Sn',ylab='Frequency',
-         cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2)
+         cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
   })
 
   ############
@@ -171,8 +174,7 @@ server <- function(input, output) {
     output$plot4=renderPlot({
     data = sn_last_n()
     run_hist(data$sn_n,main='Histogram of sn/n', xlim = hist_lims(),xlab='Sn',
-             ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2)
-
+             ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
          })
   })
   ############
@@ -181,13 +183,13 @@ server <- function(input, output) {
 
     output$plot5=renderPlot({
     gg() + aes(y = sn_sqrtn)+xlab('n')+ylab(expression(Sn/sqrt(n)))+ggtitle(expression(Plot~of~Sum~divided~by~sqrt(n))) +
-          geom_hline(yintercept =c(-3,3),color='blue')
+          geom_hline(yintercept =c(-3,3),color='blue',alpha=0.5)
     }) 
   
     output$plot6=renderPlot({
     data = sn_last_n()
     run_hist(data$sn_sqrtn,main=expression(Histogram~of~sn/sqrt(n)), xlim = hist_lims(),
-             xlab='Sn',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2)    
+             xlab='Sn',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue') 
   })
 
   ############
@@ -197,14 +199,15 @@ server <- function(input, output) {
     gg() + aes(y = sn_loglog)+xlab('n')+
         ggtitle(expression(Plot~of~Sum~divided~by~sqrt(nloglogn)))+
         ylab(expression(Sn/sqrt(nloglogn)))+
-        geom_hline(yintercept =c(-sqrt(2),sqrt(2)),color='blue')
+        geom_hline(yintercept =c(-sqrt(2),sqrt(2)),color='blue',alpha=0.5)
   })
 
     output$plot8=renderPlot({
     data = sn_last_n()
 
     run_hist(data$sn_loglog,main=expression(Histogram~of~Sn/sqrt(nloglogn)), xlim = hist_lims(),
-             xlab='Sn',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2)    
+             xlab='Sn',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')  
+    
   })
 
   output$descriptions <- renderUI({
