@@ -30,7 +30,8 @@ ui <- fluidPage(
     ),
     # Show a plot of the generated distribution
     mainPanel(
-      plotOutput('plot1'),
+      plotOutput('plot1', click = "plot_click"),
+      verbatimTextOutput("click_ids"),
       plotOutput('plot2'),
       plotOutput('plot3'),
       plotOutput('plot4'),
@@ -43,6 +44,12 @@ ui <- fluidPage(
 )
 
 server <- function(input, output) {
+  
+  output$click_ids <- renderPrint({
+    cat("The closest n is:\n")
+    str(input$plot_click$x)
+  })
+  
   DistX <- reactive( input$dist )
   nX <- reactive( input$nX )
   paramsX <- reactive(  {
