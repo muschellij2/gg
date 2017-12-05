@@ -36,7 +36,7 @@ ui <-  shinyUI(navbarPage("Law of the Iterated Logarithm",
     # Show a plot of the generated distribution
     mainPanel(
       withMathJax(h6('$$\\text{The simulation generates 200 iid random variables with 10,000 replicats.}$$')),
-      withMathJax(h6('$$\\text{The sum of the random variables } S_n\\text{are calculated,and}~ S_n~ \\text{are dependent for i =1,2,..n}~ S_n\\text{,} S_n/n \\text{,}~ S_n/\\sqrt{n}\\text{and}~ S_n/\\sqrt{n \\log\\log(n)} \\text{are plotted.}$$')),
+      withMathJax(h6('$$\\text{The sum of the random variables } S_n~\\text{are calculated,and}~ S_n~ \\text{are dependent for i =1,2,..n.}~~S_n\\text{,}~S_n/n\\text{,}~ S_n/\\sqrt{n}~\\text{and}~ S_n/\\sqrt{n \\log\\log(n)}~\\text{are plotted.}$$')),
       withMathJax(h6('$$\\text{The histograms shows the corresponding distribution of the last replicate.}$$')),
       plotOutput('plot3'),
       plotOutput('plot4'),
@@ -180,13 +180,13 @@ server <- function(input, output) {
   ############
 
     output$plot5=renderPlot({
-    gg() + aes(y = sn_sqrtn)+xlab('n')+ylab(withMathJax('$$S_n/\\sqrt{n}$$'))+ggtitle(withMathJax("$$\\text{Plot of Sum divided by }\\sqrt{n}$$"))+
+    gg() + aes(y = sn_sqrtn)+xlab('n')+ylab(expression(Sn/sqrt(n)))+ggtitle(expression(Plot~of~Sum~divided~by~sqrt(n))) +
           geom_hline(yintercept =c(-3,3),color='blue')
     }) 
   
     output$plot6=renderPlot({
     data = sn_last_n()
-    run_hist(data$sn_sqrtn,main='Histogram of sn/sqrt(n)', xlim = hist_lims(),
+    run_hist(data$sn_sqrtn,main=expression(Histogram~of~sn/sqrt(n)), xlim = hist_lims(),
              xlab='Sn',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2)    
   })
 
@@ -194,12 +194,16 @@ server <- function(input, output) {
   # S_n / sqrt(n loglog(n)) plots
   ############
     output$plot7=renderPlot({
-    gg() + aes(y = sn_loglog)+geom_hline(yintercept =c(-sqrt(2),sqrt(2)),color='blue')
+    gg() + aes(y = sn_loglog)+xlab('n')+
+        ggtitle(expression(Plot~of~Sum~divided~by~sqrt(nloglogn)))+
+        ylab(expression(Sn/sqrt(nloglogn)))+
+        geom_hline(yintercept =c(-sqrt(2),sqrt(2)),color='blue')
   })
 
     output$plot8=renderPlot({
     data = sn_last_n()
-    run_hist(data$sn_loglog,main='Histogram of sn/sqrt(nloglogn)', xlim = hist_lims(),
+
+    run_hist(data$sn_loglog,main=expression(Histogram~of~Sn/sqrt(nloglogn)), xlim = hist_lims(),
              xlab='Sn',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2)    
   })
 
