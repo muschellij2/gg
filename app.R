@@ -63,11 +63,11 @@ ui <-  shinyUI(navbarPage("Law of the Iterated Logarithm",
 
 server <- function(input, output) {
   
-  # output$click_ids <- renderPrint({
-  #   cat("The closest n is:\n")
-  #   str(input$plot_click$x)
-  # })
-  # 
+  output$click_ids <- renderPrint({
+     cat("The closest n is:\n")
+     str(input$plot_click$x)
+   })
+   
   DistX <- reactive( input$dist )
   nX <- eventReactive (input$go,{input$nX })
   
