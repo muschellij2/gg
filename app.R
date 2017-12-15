@@ -39,11 +39,11 @@ ui <-  shinyUI(navbarPage("Law of the Iterated Logarithm",
                               ),
                               # Show a plot of the generated distribution
                               mainPanel(
-                                withMathJax(h6('$$\\text{The simulation generates 200 iid random variables with 10,000 replicats.}$$')),
-                                withMathJax(h6('$$\\text{The sum of the random variables } S_n~\\text{are calculated,and}~ S_n~ \\text{are dependent for i =1,2,..n.}$$')),
-                                withMathJax(h6('$$S_n\\text{,}~S_n/n\\text{,}~ S_n/\\sqrt{n}~\\text{and}~ S_n/\\sqrt{n \\log\\log(n)}~\\text{are plotted.}$$')),
-                                withMathJax(h6('$$\\text{The histograms shows the corresponding distribution of the last replicate by default, which can be changed by users.}$$')),
-                                plotOutput('plot1', click = "plot_click1",height = 2000),
+                                withMathJax(h4('$$\\text{The simulation generates 200 iid random variables with 10,000 replicats.}$$')),
+                                withMathJax(h4('$$\\text{The sum of the random variables } S_n~\\text{are calculated,and}~ S_n~ \\text{are dependent for i =1,2,..n.}$$')),
+                                withMathJax(h4('$$S_n\\text{,}~S_n/n\\text{,}~ S_n/\\sqrt{n}~\\text{and}~ S_n/\\sqrt{n \\log\\log(n)}~\\text{are plotted.}$$')),
+                                withMathJax(h4('$$\\text{The histograms shows the corresponding distribution of the last replicate by default, which can be changed by users.}$$')),
+                                plotOutput('plot1', click = "plot_click1",height = 1000),
                                 br(),
                                 verbatimTextOutput('plot1_txt'),
                                 br(),
@@ -142,10 +142,18 @@ server <- function(input, output) {
     # subset data
     long = long[ (long$n %% 50 == 0),]
     long 
-
   })
-  
-  
+
+ df_longer =eventReactive (input$go,{
+   long=sn_df()
+   longer = long %>% 
+    select(-sn, -loglog) %>% 
+    gather(type, value = value, sn_n, sn_sqrtn, sn_loglog)
+  shared_longer=SharedData$new(longer)
+  shared_longer
+ })
+ 
+ 
   within= reactive({
     long = sn_df()
     dat=long %>%
@@ -179,25 +187,18 @@ server <- function(input, output) {
     clicked_n = input$plot_click1$x
     if (is.null(clicked_n)) {
       clicked_n = max(long$n)
-    } else {
-      clicked_n = ceiling(clicked_n*10000 / 50) * 50
+       }else if (clicked_n>10000) {
+         clicked_n = max(long$n)
+       }else if (clicked_n<0) {
+         clicked_n = min(long$n) 
+       }else {
+         clicked_n = ceiling(clicked_n / 50) * 50
+         
     }
     long = long[ long$n == clicked_n, ]
     long
   })
   
-  
-  
-
-  gg = eventReactive (input$go,{
-    ggplot(data=sn_df(), aes(x=n, group = variable)) + 
-      geom_line(alpha=0.5,color='lightblue') +
-      # facet_wrap(~ type)+
-      # facet_wrap(~ type, ncol = 1)+
-      theme(axis.title=element_text(size=25),
-            axis.text=element_text(size=21),
-            title=element_text(size=25)) 
-  })
 
   
   hist_lims = reactive ({
@@ -226,32 +227,31 @@ server <- function(input, output) {
   ############
   # S_n / n plots
   ############
-
-observeEvent(input$go,{
- output$plot1=renderPlot({
-   g1=gg() + aes(y = sn_n)+ylab('Sn/n')+xlab('Sample size n')+
-    ggtitle('Plot of Sum divided by n')
-   #xlab('Sample size n')+
-   g2=gg() + aes(y = sn_sqrtn)+ylab(expression(Sn/sqrt(n)))+ggtitle(expression(Plot~of~Sum~divided~by~sqrt(n))) + xlab('Sample size n')+
-     geom_hline(yintercept =c(-3,3),color='blue',alpha=0.5)
-   g3=gg() + aes(y = sn_loglog)+
-     ggtitle(expression(Plot~of~Sum~divided~by~sqrt(nloglogn)))+xlab('Sample size n')+
-     ylab(expression(Sn/sqrt(nloglogn)))+
-     geom_hline(yintercept =c(-sqrt(2),sqrt(2)),color='blue',alpha=0.5)
-   g4=  gg() + aes(y = sn)  + ylab('Sn')+ ggtitle('Sum of n variables')+xlab('Sample size n')
-   grid.arrange(g1, g2,g3,g4,ncol=1 )},height = 2000)
+  observeEvent(input$go,{
+      output$plot1=renderPlot({
+        shared_longer=df_longer()
+        labels <- c(sn_loglog = 'Plot of sum Sn divided by √(nloglogn)', sn_n = "Plot of sum Sn divided by n",sn_sqrtn='Plot of sum Sn divided by √(n)')
+        ggplot(shared_longer, aes(n, value,group = variable)) + 
+          geom_line(alpha=0.5,color='lightblue') + 
+          facet_wrap(~type, scales = "free_y", ncol = 1,labeller = labeller(type=labels))+
+          theme(axis.title=element_text(size=21),
+                         axis.text=element_text(size=21),
+                         title=element_text(size=21),
+                strip.text = element_text(size = 23))+
+          xlab('Sample size n')+
+          xlim(1,10000)
+      })
   })
-
-
+ 
   observeEvent(input$go,{
     output$plot1_txt=renderPrint({
-      cat('The plot shows the sum Sn divided by n,divided by √n,divided by √loglog(n) of the 200 replicates. 
+      cat('The plot shows the sum Sn divided by √loglog(n), divided by n,divided by √n of the 200 replicates. 
+
+Sn/√loglog(n) would oscillate between ±√2.
 
 Sn/n would be close to 0 as n gets larger. By the law of large numers we have Sn/n → 0 almost surely.
 
-Sn/√n is a continous distirbution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.
-
-Sn/√loglog(n) would oscillate between ±√2.')
+Sn/√n is a continous distirbution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.')
     })
   })
   
@@ -270,7 +270,7 @@ Sn/√loglog(n) would oscillate between ±√2.')
       if (is.null(clicked_n)) {
         clicked_n = 10000
       } else {
-        clicked_n = ceiling(clicked_n*10000 / 50) * 50
+        clicked_n = ceiling(clicked_n / 50) * 50
       }
       cat(clicked_n)
       cat(', which would be approximate normal distribution as n gets larger.')
@@ -296,7 +296,7 @@ Sn/√loglog(n) would oscillate between ±√2.')
       if (is.null(clicked_n)) {
         clicked_n = 10000
       } else {
-        clicked_n = ceiling(clicked_n*10000 / 50) * 50
+        clicked_n = ceiling(clicked_n / 50) * 50
       }
       cat(clicked_n)      
       cat(',which would be approximate normal distribution as n gets larger.')
@@ -318,7 +318,7 @@ Sn/√loglog(n) would oscillate between ±√2.')
       if (is.null(clicked_n)) {
         clicked_n = 10000
       } else {
-        clicked_n = ceiling(clicked_n*10000 / 50) * 50
+        clicked_n = ceiling(clicked_n / 50) * 50
       }
       cat(clicked_n)
       cat(', which would be approximate normal distribution as n gets larger.')
@@ -341,7 +341,7 @@ Sn/√loglog(n) would oscillate between ±√2.')
       if (is.null(clicked_n)) {
         clicked_n = 10000
       } else {
-        clicked_n = ceiling(clicked_n*10000 / 50) * 50
+        clicked_n = ceiling(clicked_n / 50) * 50
       }
       cat(clicked_n)
       cat(', which would be approximate normal distribution as n gets larger.')
