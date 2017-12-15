@@ -357,7 +357,7 @@ Sn/√loglog(n) would oscillate between ±√2.')
         ggtitle('Proportion of Sn/sqrt(nloglogn) within √2 boundary')+
       theme(axis.title=element_text(size=30),
             axis.text=element_text(size=21,face="bold"),
-            title=element_text(size=20))+
+            title=element_text(size=25))+
         geom_line()+
       geom_hline(yintercept = 1)    
       })
