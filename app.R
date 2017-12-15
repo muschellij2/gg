@@ -7,6 +7,7 @@ library(plotly)
 library(crosstalk)
 library(tidyr)
 library(dplyr)
+library(gridExtra)
 ui <-  shinyUI(navbarPage("Law of the Iterated Logarithm",
                           tabPanel("Descriptions", fluidPage(
                             uiOutput('descriptions')
@@ -42,36 +43,29 @@ ui <-  shinyUI(navbarPage("Law of the Iterated Logarithm",
                                 withMathJax(h6('$$\\text{The sum of the random variables } S_n~\\text{are calculated,and}~ S_n~ \\text{are dependent for i =1,2,..n.}$$')),
                                 withMathJax(h6('$$S_n\\text{,}~S_n/n\\text{,}~ S_n/\\sqrt{n}~\\text{and}~ S_n/\\sqrt{n \\log\\log(n)}~\\text{are plotted.}$$')),
                                 withMathJax(h6('$$\\text{The histograms shows the corresponding distribution of the last replicate by default, which can be changed by users.}$$')),
-                                plotOutput('plot3', click = "plot_click1"),
+                                plotOutput('plot1', click = "plot_click1",height = 2000),
                                 br(),
-                                verbatimTextOutput('plot3_txt'),
+                                verbatimTextOutput('plot1_txt'),
                                 br(),
                                 br(),
-                               #verbatimTextOutput("click_ids"),
-                                plotOutput('plot4'),
+                                plotOutput('plot2'),
+                               br(),
+                               verbatimTextOutput('plot2_txt'),
+                               br(),
+                               br(),
+                               plotOutput('plot3'),
+                               br(),
+                               verbatimTextOutput('plot3_txt'),
+                               br(),
+                               br(),
+                               plotOutput('plot4'),
                                br(),
                                verbatimTextOutput('plot4_txt'),
                                br(),
                                br(),
-                               plotOutput('plot5',click = "plot_click2"),
+                               plotOutput('plot5'),
                                br(),
                                verbatimTextOutput('plot5_txt'),
-                               br(),
-                               br(),
-                               plotOutput('plot6'),
-                               br(),
-                               verbatimTextOutput('plot6_txt'),
-                               br(),
-                               br(),
-                               # withMathJax(h2( "$$\\text{Plot of Sum divided by }\\sqrt{n \\log\\log(n)}$$")),
-                                plotOutput('plot7',click = "plot_click3"),
-                               br(),
-                               verbatimTextOutput('plot7_txt'),
-                               br(),
-                               br(),
-                               plotOutput('plot8'),
-                               br(),
-                               verbatimTextOutput('plot8_txt'),
                                br(),
                                br(),
                                plotOutput('with'),
@@ -79,31 +73,17 @@ ui <-  shinyUI(navbarPage("Law of the Iterated Logarithm",
                                verbatimTextOutput('with_txt'),
                                br(),
                                br(),
-                               # #h2("Plot of Sum of n variables"),
-                                plotOutput('plot1',click = "plot_click4"),
-                               br(),
-                               verbatimTextOutput('plot1_txt'),
-                               br(),
-                               br(),
-                               plotOutput('plot2'),
-                               br(),
-                               verbatimTextOutput('plot2_txt'),
-                               br(),
-                               br(),
                                plotOutput('sta'),
                                br(),
                                verbatimTextOutput('sta_txt'),
                                br(),
                                br()
-                                
                               )
                             )
                           )
                           )
 )
 )
-
-
 
 
 server <- function(input, output) {
@@ -161,13 +141,8 @@ server <- function(input, output) {
     
     # subset data
     long = long[ (long$n %% 50 == 0),]
-    long
-    #shared 
-    # longer = long %>% 
-    #    select(-loglog) %>% 
-    #    gather(type, value = value, sn,sn_n, sn_sqrtn, sn_loglog)
-    #  shared_longer <- SharedData$new(longer)
-    #  shared_longer
+    long 
+
   })
   
   
@@ -198,19 +173,14 @@ server <- function(input, output) {
    dat
   })
 
-  # OLD_sn_last_n = eventReactive (input$go,{
-  #   long = sn_df()
-  #   long = long[ long$n == max(long$n), ]
-  #   long
-  # })
-  # 
+
   sn_last_n = reactive ({
     long = sn_df()
     clicked_n = input$plot_click1$x
     if (is.null(clicked_n)) {
       clicked_n = max(long$n)
     } else {
-      clicked_n = ceiling(clicked_n / 50) * 50
+      clicked_n = ceiling(clicked_n*10000 / 50) * 50
     }
     long = long[ long$n == clicked_n, ]
     long
@@ -218,52 +188,19 @@ server <- function(input, output) {
   
   
   
-  #sn_last_n = reactive ({
-  #     long = sn_df()
-  #     clicked_n1 = input$plot_click1$x
-  #     clicked_n2 = input$plot_click2$x
-  #     clicked_n3 = input$plot_click3$x
-  #     clicked_n4 = input$plot_click4$x
-  #     if (is.null(clicked_n1)) {
-  #       if (is.null(clicked_n2)) {
-  #         if (is.null(clicked_n3)) {
-  #           if (is.null(clicked_n4)) {
-  #       clicked_n = max(long$n)
-  #            } else {
-  #       clicked_n = ceiling(clicked_n4 / 50) * 50
-  #            }
-  # 
-  #           }else{
-  #      clicked_n = ceiling(clicked_n3 / 50) * 50
-  #           }
-  #         }else{
-  #    clicked_n = ceiling(clicked_n2 / 50) * 50
-  #           }
-  #       }else{
-  #   clicked_n = ceiling(clicked_n1 / 50) * 50
-  #       }
-  #     long = long[ long$n == clicked_n, ]
-  #     long
-  # })
-  
-  
-  
-  
-  
+
   gg = eventReactive (input$go,{
     ggplot(data=sn_df(), aes(x=n, group = variable)) + 
-      geom_line(alpha=0.1,color='hotpink') +
+      geom_line(alpha=0.5,color='lightblue') +
       # facet_wrap(~ type)+
       # facet_wrap(~ type, ncol = 1)+
-      theme(axis.title=element_text(size=30),
-            axis.text=element_text(size=21,face="bold"),
+      theme(axis.title=element_text(size=25),
+            axis.text=element_text(size=21),
             title=element_text(size=25)) 
-    
   })
+
   
-  
-  
-  hist_lims = eventReactive (input$go,{
+  hist_lims = reactive ({
     if (input$fix_x) {
       data = sn_last_n()
       lim = range(c(data$sn_n, data$sn_sqrtn, 
@@ -286,136 +223,131 @@ server <- function(input, output) {
   }
   
 
-  # output$click_ids <- renderPrint({
-  #   cat("The closest n is:\n")
-  #   str(input$plot_click1$x)
-  # })
-  # #
   ############
   # S_n / n plots
   ############
-  
+
+observeEvent(input$go,{
+ output$plot1=renderPlot({
+   g1=gg() + aes(y = sn_n)+ylab('Sn/n')+xlab('Sample size n')+
+    ggtitle('Plot of Sum divided by n')
+   #xlab('Sample size n')+
+   g2=gg() + aes(y = sn_sqrtn)+ylab(expression(Sn/sqrt(n)))+ggtitle(expression(Plot~of~Sum~divided~by~sqrt(n))) + xlab('Sample size n')+
+     geom_hline(yintercept =c(-3,3),color='blue',alpha=0.5)
+   g3=gg() + aes(y = sn_loglog)+
+     ggtitle(expression(Plot~of~Sum~divided~by~sqrt(nloglogn)))+xlab('Sample size n')+
+     ylab(expression(Sn/sqrt(nloglogn)))+
+     geom_hline(yintercept =c(-sqrt(2),sqrt(2)),color='blue',alpha=0.5)
+   g4=  gg() + aes(y = sn)  + ylab('Sn')+ ggtitle('Sum of n variables')+xlab('Sample size n')
+   grid.arrange(g1, g2,g3,g4,ncol=1 )},height = 2000)
+  })
+
+
   observeEvent(input$go,{
-    output$plot3=renderPlot({
-      #gfac_col=
-      gg() + aes(y = sn_n)+xlab('Sample size n')+ylab('Sn/n')+ ggtitle('Plot of Sum divided by n')
-      #ggplotly(gfac_col)
+    output$plot1_txt=renderPrint({
+      cat('The plot shows the sum Sn divided by n,divided by √n,divided by √loglog(n) of the 200 replicates. 
+
+Sn/n would be close to 0 as n gets larger. By the law of large numers we have Sn/n → 0 almost surely.
+
+Sn/√n is a continous distirbution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.
+
+Sn/√loglog(n) would oscillate between ±√2.')
     })
   })
- # renderPrint({
-    #   cat("The closest n is:\n")
-    #   str(input$plot_click$x)
-    # })
-  observeEvent(input$go,{
-    output$plot3_txt=renderPrint({
-      cat('The plot shows the sum Sn divided by n  of the 200 replicates, which would be close to 0 as n gets larger. By the law of large numers we have Sn/n → 0 almost surely.')
-    })
-  })
   
-  # observeEvent(input$go,{
-  output$plot4=renderPlot({
+  output$plot2=renderPlot({
     data = sn_last_n()
     un = unique(data$n)
     run_hist(data$sn_n,
-             main = paste0('Histogram of Sn/n n = ', un),
-             xlim = hist_lims(),xlab='Sn',
+             main = paste0('Histogram of Sn/n at n = ', un),
+             xlim = hist_lims(),xlab='Sn/n',
              ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
   })
   observeEvent(input$go,{
-    output$plot4_txt=renderPrint({
+    output$plot2_txt=renderPrint({
       cat('The histogram shows the Sum Sn divided by n at n = ')
       clicked_n = input$plot_click1$x
       if (is.null(clicked_n)) {
         clicked_n = 10000
       } else {
-        clicked_n = ceiling(clicked_n / 50) * 50
+        clicked_n = ceiling(clicked_n*10000 / 50) * 50
       }
       cat(clicked_n)
       cat(', which would be approximate normal distribution as n gets larger.')
     })
   })
-  # })
+ 
   ############
   # S_n / sqrt(n) plots
   ############
-  observeEvent(input$go,{
-    output$plot5=renderPlot({
-      gg() + aes(y = sn_sqrtn)+xlab('Sample size n')+ylab(expression(Sn/sqrt(n)))+ggtitle(expression(Plot~of~Sum~divided~by~sqrt(n))) +
-        geom_hline(yintercept =c(-3,3),color='blue',alpha=0.5)
-    })
-  })
-  observeEvent(input$go,{
-    output$plot5_txt=renderPrint({
-      cat('The plot shows the sum Sn divided by square root of n of the 200 replicates, which is a continous distirbution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.')
-    })
-  })
-  
-  output$plot6=renderPlot({
+
+  output$plot3=renderPlot({
     data = sn_last_n()
     un = unique(data$n)
     run_hist(data$sn_sqrtn,
-             main = paste0('Histogram of Sn/sqrt(n) n = ', un),
-             # main=paste0(expression(Histogram~of~Sn/sqrt(n)), un)
+             main = paste0('Histogram of Sn/√n at n = ', un),
              xlim = hist_lims(),
-             xlab='Sn',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
+             xlab='Sn/√n',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
   })
   observeEvent(input$go,{
-    output$plot6_txt=renderPrint({
+    output$plot3_txt=renderPrint({
       cat('The histogram shows the Sum Sn divided by √n at n = ')
       clicked_n = input$plot_click1$x
       if (is.null(clicked_n)) {
         clicked_n = 10000
       } else {
-        clicked_n = ceiling(clicked_n / 50) * 50
+        clicked_n = ceiling(clicked_n*10000 / 50) * 50
       }
       cat(clicked_n)      
       cat(',which would be approximate normal distribution as n gets larger.')
     })
   })
-  ############
-  # S_n / sqrt(n loglog(n)) plots
-  ############
-  observeEvent(input$go,{
-    output$plot7=renderPlot({
-      gg() + aes(y = sn_loglog)+xlab('Sample size n')+
-        ggtitle(expression(Plot~of~Sum~divided~by~sqrt(nloglogn)))+
-        ylab(expression(Sn/sqrt(nloglogn)))+
-        geom_hline(yintercept =c(-sqrt(2),sqrt(2)),color='blue',alpha=0.5)
-    })
-  })
-  observeEvent(input$go,{
-    output$plot7_txt=renderPrint({
-      cat('The plot shows the sum Sn divided by square root of loglog(n) of the 200 replicates, which oscillates between ±√2.')
-    })
-  })
-  
-  
-  
-  output$plot8=renderPlot({
+
+  output$plot4=renderPlot({
     data = sn_last_n()
     un = unique(data$n)
     run_hist(data$sn_loglog,
-             # main=expression(Histogram~of~Sn/sqrt(nloglogn)), 
-             #main=paste0(expression(Histogram~of~Sn/sqrt(nloglogn)), un)
-             main = paste0('Histogram of Sn/sqrt(nloglogn) n = ', un),
+             main = paste0('Histogram of Sn/√loglog(n) at n = ', un),
              xlim = hist_lims(),
-             xlab='Sn',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
-    
-  })
+             xlab='Sn/√loglog(n)',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
+    })
   observeEvent(input$go,{
-    output$plot8_txt=renderPrint({
+    output$plot4_txt=renderPrint({
       cat('The histogram shows the Sum Sn divided by √loglog(n) at n = ')
       clicked_n = input$plot_click1$x
       if (is.null(clicked_n)) {
         clicked_n = 10000
       } else {
-        clicked_n = ceiling(clicked_n / 50) * 50
+        clicked_n = ceiling(clicked_n*10000 / 50) * 50
       }
       cat(clicked_n)
       cat(', which would be approximate normal distribution as n gets larger.')
     })
   })
-
+  
+  output$plot5=renderPlot({
+    data = sn_last_n()
+    un = unique(data$n)
+    hist(data$sn,
+         main = paste0('Histogram of Sn at n = ', un),
+         xlab='Sn',ylab='Frequency',
+         cex.lab=2, cex.axis=2, cex.main=2,
+         cex.sub=2,col='lightblue')
+  })
+  observeEvent(input$go,{
+    output$plot5_txt=renderPrint({
+      cat('The histogram shows sum Sn at n = ')
+      clicked_n = input$plot_click1$x
+      if (is.null(clicked_n)) {
+        clicked_n = 10000
+      } else {
+        clicked_n = ceiling(clicked_n*10000 / 50) * 50
+      }
+      cat(clicked_n)
+      cat(', which would be approximate normal distribution as n gets larger.')
+    })
+  })
+  
   observeEvent(input$go,{
     output$with=renderPlot({
       dat=within()
@@ -436,46 +368,8 @@ server <- function(input, output) {
       cat('The plot shows the proportion of Sn/√loglog(n) that are bounded within ±√2.')
     })
   })
-  
-  observeEvent(input$go,{
-    output$plot1=renderPlot({
-      gg() + aes(y = sn) + xlab('Sample size n') + ylab('Sn')+ ggtitle('Sum of n variables')
-    })
-  })
-  # observeEvent(input$go,{
-  #   output$plot1=renderPlot({
-  # ggplotly(gfac_col)
-  #   })
-  # })
-  observeEvent(input$go,{
-    output$plot1_txt=renderPrint({
-      cat('The plot shows the sum Sn of the 200 replicates.')
-    })
-  })
 
-  
-  output$plot2=renderPlot({
-    data = sn_last_n()
-    un = unique(data$n)
-    hist(data$sn,
-         main = paste0('Histogram of Sn for n = ', un),
-         xlab='Sn',ylab='Frequency',
-         cex.lab=2, cex.axis=2, cex.main=2,
-         cex.sub=2,col='lightblue')
-  })
-  observeEvent(input$go,{
-    output$plot2_txt=renderPrint({
-      cat('The histogram shows sum Sn at n = ')
-      clicked_n = input$plot_click1$x
-      if (is.null(clicked_n)) {
-        clicked_n = 10000
-      } else {
-        clicked_n = ceiling(clicked_n / 50) * 50
-      }
-      cat(clicked_n)
-      cat(', which would be approximate normal distribution as n gets larger.')
-    })
-  })
+
   
 
   observeEvent(input$go,{
@@ -483,7 +377,7 @@ server <- function(input, output) {
       dat=stats()
       g = dat %>%
         ggplot(aes(x = n, y = value, colour = type)) +
-        ggtitle('Quantiles of Sn/sqrt(n)')+
+        ggtitle('Quantiles of Sn/√n')+
         xlab('Sample size n')+
         theme(axis.title=element_text(size=30),
               axis.text=element_text(size=21,face="bold"),
