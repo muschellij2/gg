@@ -21,7 +21,10 @@ ui <-  shinyUI(navbarPage("Law of the Iterated Logarithm",
                                                  "Bernoulli" = "bernoulli",
                                                  "Poisson" = "poisson"
                                             )
-                                ),  
+                                ),
+                                numericInput("rep", "Number of replicates:", 200, min = 1),
+                                numericInput("nX", "Track single replicate:", 1, min = 1),
+                                
                                 conditionalPanel(
                                   condition = "input.dist== 'normal'",
                                   numericInput("mean", "mean:", min=0, max=400, value=0, step=0.05),
@@ -39,13 +42,18 @@ ui <-  shinyUI(navbarPage("Law of the Iterated Logarithm",
                               ),
                               # Show a plot of the generated distribution
                               mainPanel(
-                                withMathJax(h4('$$\\text{The simulation generates 200 iid random variables with 10,000 replicats.}$$')),
+                                withMathJax(h4('$$\\text{The simulation generates iid random variables with 10,000 replicats.}$$')),
                                 withMathJax(h4('$$\\text{The sum of the random variables } S_n~\\text{are calculated,and}~ S_n~ \\text{are dependent for i =1,2,..n.}$$')),
                                 withMathJax(h4('$$S_n\\text{,}~S_n/n\\text{,}~ S_n/\\sqrt{n}~\\text{and}~ S_n/\\sqrt{n \\log\\log(n)}~\\text{are plotted.}$$')),
                                 withMathJax(h4('$$\\text{The histograms shows the corresponding distribution of the last replicate by default, which can be changed by users.}$$')),
                                 plotOutput('plot1', click = "plot_click1",height = 1000),
                                 br(),
                                 verbatimTextOutput('plot1_txt'),
+                                br(),
+                                br(),
+                                plotOutput('track'),
+                                br(),
+                                verbatimTextOutput('track_txt'),
                                 br(),
                                 br(),
                                 plotOutput('plot2'),
@@ -90,8 +98,8 @@ server <- function(input, output) {
   
   
   DistX <- reactive( input$dist )
-  nX <- eventReactive (input$go,{input$nX })
-  
+  n.rep= eventReactive (input$go,{input$rep})
+  n.X=eventReactive (input$go,{input$nX})
   paramsX <- eventReactive (input$go,{
     switch(DistX(),
            "normal" = list(mean=input$mean, sd=input$sd),
@@ -117,7 +125,7 @@ server <- function(input, output) {
            "poisson" = sqrt(input$lambda)
     )})
   sampleDistX=eventReactive (input$go,{
-    res = do.call(rdistX(), c(10000*200, paramsX()))
+    res = do.call(rdistX(), c(10000*n.rep(), paramsX()))
     res = matrix(res,nrow=10000)
     res
   })
@@ -193,14 +201,22 @@ server <- function(input, output) {
          clicked_n = min(long$n) 
        }else {
          clicked_n = ceiling(clicked_n / 50) * 50
-         
     }
     long = long[ long$n == clicked_n, ]
     long
   })
   
-
-  
+  track_single = reactive({
+    long = sn_df()
+    n.X=ceiling(n.X() / 50) * 50
+    long = long[ long$n == n.X, ]
+    long=cbind(NX=as.numeric(rownames(long)),long)
+    longer = long %>%
+      select(-n,-sn,-loglog) %>%
+      gather(type, value = value, sn_n, sn_sqrtn, sn_loglog)
+    longer
+  })
+ 
   hist_lims = reactive ({
     if (input$fix_x) {
       data = sn_last_n()
@@ -224,11 +240,13 @@ server <- function(input, output) {
   }
   
 
+
   ############
   # S_n / n plots
   ############
   observeEvent(input$go,{
       output$plot1=renderPlot({
+        
         shared_longer=df_longer()
         labels <- c(sn_loglog = 'Plot of sum Sn divided by √(nloglogn)', sn_n = "Plot of sum Sn divided by n",sn_sqrtn='Plot of sum Sn divided by √(n)')
         ggplot(shared_longer, aes(n, value,group = variable)) + 
@@ -245,7 +263,7 @@ server <- function(input, output) {
  
   observeEvent(input$go,{
     output$plot1_txt=renderPrint({
-      cat('The plot shows the sum Sn divided by √loglog(n), divided by n,divided by √n of the 200 replicates. 
+      cat('The plot shows the sum Sn divided by √loglog(n), divided by n,divided by √n of the replicates. 
 
 Sn/√loglog(n) would oscillate between ±√2.
 
@@ -255,6 +273,28 @@ Sn/√n is a continous distirbution and lie roughly between -3 and 3. By the cen
     })
   })
   
+  observeEvent(input$go,{
+    output$track=renderPlot({
+      dat=track_single()
+      g = dat %>%
+        ggplot(aes(x = NX, y = value, colour = type)) +
+        ylab(label="value") + 
+        xlab("Sample size n")+
+        ggtitle(paste0('Plot of single replicate at ',ceiling(n.X() / 50) * 50))+
+        theme(axis.title=element_text(size=30),
+              axis.text=element_text(size=21,face="bold"),
+              title=element_text(size=25))+
+        geom_line()
+      g
+      
+    })
+  })
+  observeEvent(input$go,{
+    output$track_txt=renderPrint({
+      cat(paste0('The plot shows the Sum Sn divided by n, √n and √loglog(n) for the repliate ',ceiling(n.X() / 50) * 50))
+      
+    })
+  })
   output$plot2=renderPlot({
     data = sn_last_n()
     un = unique(data$n)
