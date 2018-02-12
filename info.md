@@ -5,22 +5,49 @@ date: "11/27/2017"
 output: html_document
 ---
 
+# Law of Iterated Logarithm
 
-The APP aims to demonstrate the Law of the Iterated Logarithm. Users can select Normal, Bernoulli, Poisson distributions and set up corresponding parameters for random variable generation. 
+## Theorem
 
-Let $X_1,X_2$,.. be iid rv's with mean 0 and std 1. Let $S_n = X_1+..+X_n$. By the strong law of large numers we have $S_n/{n}\to 0$ almost surely,
-
-and by the central limit theorem we have $S_n/\sqrt{n}$ converges in distribution to a standard normal random variable. 
-
-So in some sense $S_n/n$ "squeezes" down to one
-point whereas $S_n/\sqrt{n}$ "spreads out", roughly between -3 and 3, but a continous distirbution. 
-
-It is a reasonable question then whether there is an in-between case, namely a sequence ${a_n}$ such that $\sqrt{n}$<$a_n$<$n$ converges to something between a constant and a distribution. The answer is given by
-
-Theorem (Law of the Iterated Logarithm, Kolmogorov 1929)
+#### Let ${X_n}$ be independent and identically distributed random variable with mean zero and variance one. Let $S_n = X_1 + ... + X_n$. Then 
 
 $$
 \limsup_{n\to{\infty}}\frac{S_n}{\sqrt{n\log{\log{n}}}} = \sqrt{2}~~~ \text{a.s.}
 $$
 
-by symmetry the corresponding liminf is $-\sqrt{2}$, so this sequence oscillates between ±$\sqrt{2}$. 
+$$
+\liminf_{n\to{\infty}}\frac{S_n}{\sqrt{n\log{\log{n}}}} = -\sqrt{2}~~~ \text{a.s.}, 
+$$
+
+#### Therefore, $\frac{S_n}{\sqrt{n\log{\log{n}}}}$ oscillates between ±$\sqrt{2}$. 
+
+
+## Connection with CLT and LLN
+
+### Central limit theorem 
+#### Let ${X_n}$ be independent and identically distributed random variable with mean zero and variance one. Let $S_n = X_1 + ... + X_n$. Then 
+$$
+\lim_{n\to{\infty}}\frac{S_n}{\sqrt{n}} \to N(0,1)
+$$
+
+### Strong Law of Large Number 
+#### Let ${X_n}$ be independent and identically distributed random variable with mean zero and variance one. Let $S_n = X_1 + ... + X_n$. Then 
+$$
+\lim_{n\to{\infty}}\frac{S_n}{\sqrt{n}}\to~~~0 ~~~\text{a.s.}, 
+$$
+
+
+
+#### So in some sense $S_n/n$ "squeezes" down to one point whereas $S_n/\sqrt{n}$ "spreads out", roughly between -3 and 3, and $S_n/\sqrt{n}$ is a continous distirbution. 
+
+#### It is a reasonable question then whether there is an in-between case, namely a sequence ${a_n}$ such that $\sqrt{n}$<$a_n$<$n$ converges to something between a constant and a distribution. The answer is given by the law of iterated logrithm 
+
+
+
+
+
+
+
+
+
+
