@@ -176,6 +176,7 @@ server <- function(input, output) {
     long$loglog = pmax(1e-7, log(log(long$n)))
     long$sqrtlog=sqrt(long$loglog)
     long$sn_loglog = long$sn / sqrt(long$n * long$loglog)
+    long$sn_loglog = long$sn / sqrt(long$n * long$loglog)
     long$log_out = abs(long$sn_loglog) > sqrt(2)
     names(long)[names(long) == 'variable'] <- 'replicate'
     long
@@ -358,7 +359,8 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
              xlab='Sn/√n',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
   })
 
-  output$plot4=renderPlot({
+  output$plot4=
+    ({
     data = sn_last_n()
     un = unique(data$n)
     run_hist(data$sn_loglog,
