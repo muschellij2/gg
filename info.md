@@ -33,7 +33,7 @@ $$
 ### Strong Law of Large Number 
 #### Let ${X_n}$ be independent and identically distributed random variable with mean zero and variance one. Let $S_n = X_1 + ... + X_n$. Then 
 $$
-\lim_{n\to{\infty}}\frac{S_n}{\sqrt{n}}\to~~~0 ~~~\text{a.s.}, 
+\lim_{n\to{\infty}}\frac{S_n}{n}\to~~~0 ~~~\text{a.s.}, 
 $$
 
 

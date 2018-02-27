@@ -46,7 +46,7 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                               headerPanel("Law of Iterated Logarithm"),
                               sidebarLayout(
                               sidebarPanel(
-                                helpText("Create random varible by setting distribution and parameter values"),
+                                helpText("Create random variable by setting distribution and parameter values"),
                                 selectInput("dist", "Distribution",
                                             list("Normal" = "normal",
                                                  "Bernoulli" = "bernoulli",
@@ -55,22 +55,26 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                 ),
                                 conditionalPanel(
                                   condition = "input.dist== 'normal'",
-                                  numericInput("mean", "mean:", min=0, max=400, value=0, step=0.05),
-                                  numericInput("sd", "sd: ", min=0.1, max=20, value=1, step=0.05)
+                                  numericInput("mean", "mean:", value=0, step=0.05),
+                                  numericInput("sd", "sd: ", min=0.1, value=1, step=0.05)
                                 ),
                                 conditionalPanel(
                                   condition = "input.dist == 'bernoulli'",
-                                  numericInput("p", "p: ", min=0.05, max=1, value=0.5, step=0.05)
+                                  numericInput("p", "p: ", min=0.01, max=1, value=0.5, step=0.01)
                                 ),
-                                helpText("Choose a single replicate"),
+                                conditionalPanel(
+                                  condition = "input.dist == 'poisson'",
+                                  numericInput("lambda", "lambda: ", min=1, value=5, step=0.5)),
                                 numericInput("rep", "Number of replicates:", 200, min = 1),
+                                
+                                actionButton('go','Go'),
+                                checkboxInput("fix_x", "Fix x-axis in histogram", value = TRUE),
+                                helpText("Choose a single replicate"),
                                 numericInput("nX", "Track single replicate:", 1, min = 1),
                                 conditionalPanel(
                                   condition = "input.dist == 'poisson'",
-                                  numericInput("lambda", "lambda: ", min=1, max=10, value=5, step=0.5)),
-                                checkboxInput("fix_x", "Fix x-axis in histogram", value = TRUE),
-                                actionButton('go','Go')
-                              ),
+                                  numericInput("lambda", "lambda: ", min=1, max=10, value=5, step=0.5))
+                                ),
                               # Show a plot of the generated distribution
                               mainPanel(
                                 h1('Instruction'), 
@@ -88,23 +92,30 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                 h2("Comparison of Sn/n, Sn/√n, Sn/√(nloglog(n)) plots"),
                                 plotlyOutput('plot1',height = 600),br(),br(),
                                 verbatimTextOutput('plot1_txt'),br(),br(),
-                                h3('The histograms shows the corresponding distribution of the last replicate by default. Users can change it by clicking the Sn plots.'),
-                                plotOutput('plot2'),br(),br(),
-                                verbatimTextOutput('plot2_txt'),br(),br(),
-                                plotOutput('plot3'),br(),br(),
-                                verbatimTextOutput('plot3_txt'),br(),br(),
-                                plotOutput('plot4'),br(),br(),
-                                verbatimTextOutput('plot4_txt'),br(),br(),
-                                plotOutput('plot5'),br(),br(),
-                                verbatimTextOutput('plot5_txt'),br(),br(),
+                                h3('The histograms shows the corresponding frequency of n=10000 by default. Users can change it by clicking the Sn plots.'),
+                          fluidRow(
+                           splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot4'), plotOutput('plot2')),
+                           splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot3'), plotOutput('plot5'))
+                           ),
+                         
+                       #  plotOutput('plot2'),br(),br(),
+                       verbatimTextOutput('plot4_txt'),br(),br(),
+                        # 
+                        #         verbatimTextOutput('plot2_txt'),br(),br(),
+                        #         plotOutput('plot3'),br(),br(),
+                        #         verbatimTextOutput('plot3_txt'),br(),br(),
+                        # #        plotOutput('plot4'),br(),br(),
+                        #         plotOutput('plot5'),br(),br(),
+                        #         verbatimTextOutput('plot5_txt'),br(),br(),
                                 h2('Comparison of Sn/n, Sn/√n and Sn/√(nloglog(n)) plots for single replicate'), 
                                 plotlyOutput('track'),br(),br(),
                                 verbatimTextOutput('track_txt'),br(),br(),
-                                h2('Explore the boundary of Law of Iterated Logrithm'), 
+                                h2('Explore the boundary of Law of Iterated Logarithm'), 
                                 plotOutput('with'),
                                 verbatimTextOutput('with_txt'),br(),br(),
                                 plotOutput('first_time'),br(),br(),
-                                verbatimTextOutput('first_time_txt'),br(),br()
+                                verbatimTextOutput('first_time_txt'),br(),br(),
+                          h3('With simulations, we can find out that the as n gets infinity, Sn/√(nloglog(n)) would oscillates between ±√2, by the law of iterated logarithm')
                               )
                             )
                           )
@@ -163,23 +174,43 @@ server <- function(input, output) {
     long$sn_n = long$sn / long$n
     long$sn_sqrtn = long$sn / sqrt(long$n)
     long$loglog = pmax(1e-7, log(log(long$n)))
+    long$sqrtlog=sqrt(long$loglog)
     long$sn_loglog = long$sn / sqrt(long$n * long$loglog)
     long$log_out = abs(long$sn_loglog) > sqrt(2)
+    names(long)[names(long) == 'variable'] <- 'replicate'
     long
   })
-
-  time = eventReactive (input$go,{
-    long = sn_df_all()
-    log=long[c('variable','sn_loglog')]
-    t= sapply(unique(log$variable),function(i) min(which(abs(log[log$variable==i,]$sn_loglog)<sqrt(2))))
-    t
-  })
+  
   sn_df=eventReactive (input$go,{
     # subset data
     long=sn_df_all()
     long = long[ (long$n %% 50 == 0),]
     long 
   })
+  
+  time = eventReactive (input$go,{
+    long = sn_df_all()
+    log=long[c('replicate','sn_loglog')]
+    t= sapply(unique(log$replicate),function(i) min(which(abs(log[log$replicate==i,]$sn_loglog)<sqrt(2))))
+    t
+  })
+  
+  maxtime=eventReactive (input$go,{
+    t=time()
+    max(t)
+  })
+  
+  track_single = reactive({
+    long = sn_df_all()
+    long = long[-c(1,2),]
+    n.X=n.X()
+    longer = long[ long$replicate == paste0('X',n.X), ]
+    longer = longer %>%
+      select(-sn) %>%
+      gather(type, value = value, sn_n, sn_sqrtn, sn_loglog,sqrtlog)
+    longer
+  })
+
 
  df_long =eventReactive (input$go,{
    long=sn_df()
@@ -204,26 +235,7 @@ server <- function(input, output) {
       summarize(pct = mean(!log_out))
     dat
   })
-# 
-#   stats = reactive({
-#     long = sn_df()
-#     longer = long %>%
-#       select(-sn,-loglog) %>%
-#       gather(type, value = value, sn_n, sn_sqrtn, sn_loglog)
-#     dat =  longer %>%
-#     group_by(n) %>%
-#     summarize(
-#       mean = mean(value),
-#       min = min(value),
-#       q25 = quantile(value, probs = 0.25),
-#       q50 = median(value),
-#       q75 = quantile(value, probs = 0.75),
-#       max = max(value)
-#     ) %>%
-#     gather(type, value, -n)
-#    dat
-#   })
-# #
+
   line = data.frame(type=c( "sn_n","sn_sqrtn","sn_loglog"),upper=c(0,3,sqrt(2)),lower=c(0,-3,-sqrt(2)))
 
   sn_last_n = reactive ({
@@ -242,15 +254,6 @@ server <- function(input, output) {
     long
   })
 
-  track_single = reactive({
-    long = sn_df()
-    n.X=n.X()
-    longer = long[ long$variable == paste0('X',n.X), ]
-    longer = longer %>%
-      select(-sn,-loglog) %>%
-      gather(type, value = value, sn_n, sn_sqrtn, sn_loglog)
-    longer
-  })
 
    hist_lims = reactive ({
     if (input$fix_x) {
@@ -283,7 +286,7 @@ server <- function(input, output) {
       output$plot1=renderPlotly({
         shared_longer=df_longer()
         labels <- c(sn_loglog = 'Sn√(nloglogn) -> [ -√2, √2] ', sn_n = " CLT: Sn/n -> 0",sn_sqrtn='LLN: Sn/√(n) -> N(0,1)')
-        gfac=ggplot(shared_longer, aes(n, value,group = variable)) + 
+        gfac=ggplot(shared_longer, aes(n, value,group = replicate)) + 
           geom_line(alpha=0.5,color='lightblue') + 
           facet_wrap(~type, scales = "free_x", ncol = 1,labeller = labeller(type=labels))+
           geom_hline(data=line, aes(yintercept=upper),linetype="dashed", size=0.5, colour="red")+
@@ -303,20 +306,19 @@ server <- function(input, output) {
  
   observeEvent(input$go,{
     output$plot1_txt=renderPrint({
-      cat('The plot shows the sum Sn divided by √loglog(n), divided by n,divided by √n of the replicates. 
+      cat('The plot shows the sum Sn divided by √nloglog(n), divided by n,divided by √n of the replicates. 
 
-Sn/√loglog(n) would oscillate between ±√2.
+Sn/√nloglog(n) would oscillate between ±√2.
 
 Sn/n would be close to 0 as n gets larger. By the law of large number we have Sn/n → 0 almost surely.
 
-Sn/√n is a continous distirbution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.')
+Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.')
     })
   })
   
     output$track=renderPlotly({
       dat=track_single()
-      
-        g=ggplot(dat,aes(x = n, y = value, colour = factor(type,labels=c("Sn/√(nloglog(n))", "Sn/n", "Sn/√n")))) +
+        g=ggplot(dat,aes(x = n, y = value, colour = factor(type,labels=c("Sn/√(nloglog(n))", "Sn/n", "Sn/√n","√loglog")))) +
         ylab(label="value") +
         xlab("Sample size n")+
         ggtitle(paste0('Plot the ',n.X(), ' single replicate'))+
@@ -335,68 +337,38 @@ Sn/√n is a continous distirbution and lie roughly between -3 and 3. By the cen
 
    observeEvent(input$go,{
     output$track_txt=renderPrint({
-      cat(paste0('The plot shows the Sum Sn divided by n, √n and √{nloglog(n)} for the repliate ',n.X(),'For a single replicate, the plot of Sn/n is almost constant at 0; Sn/√n and Sn/√(nloglog(n)) has similar trend. Both of them oscillate when the sample size is small. As the sample size gets larger, they become more stable and Sn/√(nloglog(n)) would be closer to 0.'))
+      cat(paste0('The plot shows the Sum Sn divided by n, √n and √{nloglog(n)} for the replicate ',n.X(),'. For a single replicate, the plot of Sn/n is almost constant at 0; Sn/√n and Sn/√(nloglog(n)) has similar trend. Both of them oscillate when the sample size is small. As the sample size gets larger, they become more stable and Sn/√(nloglog(n)) would be closer to 0.'))
     })
   })
   output$plot2=renderPlot({
     data = sn_last_n()
     un = unique(data$n)
     run_hist(data$sn_n,
-             main = paste0('Histogram of Sn/n at n = ', un),
+             main = paste0('Sn/n at n = ', un),
              xlim = hist_lims(),xlab='Sn/n',
              ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
   })
-  observeEvent(input$go,{
-    output$plot2_txt=renderPrint({
-      cat('The histogram shows the Sum Sn divided by n at n = ')
-      clicked_n = input$plot_click1$x
-      if (is.null(clicked_n)) {
-        clicked_n = 10000
-      } else {
-        clicked_n = ceiling(clicked_n / 50) * 50
-      }
-      cat(clicked_n)
-      cat(', which would be approximate normal distribution as n gets larger.')
-    })
-  })
- 
-  ############
-  # S_n / sqrt(n) plots
-  ############
   
   output$plot3=renderPlot({
     data = sn_last_n()
     un = unique(data$n)
     run_hist(data$sn_sqrtn,
-             main = paste0('Histogram of Sn/√n at n = ', un),
+             main = paste0('Sn/√n at n = ', un),
              xlim = hist_lims(),
              xlab='Sn/√n',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
-  })
-  observeEvent(input$go,{
-    output$plot3_txt=renderPrint({
-      cat('The histogram shows the Sum Sn divided by √n at n = ')
-      clicked_n = input$plot_click1$x
-      if (is.null(clicked_n)) {
-        clicked_n = 10000
-      } else {
-        clicked_n = ceiling(clicked_n / 50) * 50
-      }
-      cat(clicked_n)      
-      cat(',which would be approximate normal distribution as n gets larger.')
-    })
   })
 
   output$plot4=renderPlot({
     data = sn_last_n()
     un = unique(data$n)
     run_hist(data$sn_loglog,
-             main = paste0('Histogram of Sn/√{nloglog(n)} at n = ', un),
+             main = paste0('Sn/√{nloglog(n)} at n = ', un),
              xlim = hist_lims(),
              xlab='Sn/√{nloglog(n)}',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
     })
   observeEvent(input$go,{
     output$plot4_txt=renderPrint({
-      cat('The histogram shows the sum Sn divided by √{nloglog(n)} at n = ')
+      cat('The histograms shows Sn/√{nloglog(n)}, Sn/n, Sn/√n, Sn at n = ')
       clicked_n = input$plot_click1$x
       if (is.null(clicked_n)) {
         clicked_n = 10000
@@ -412,25 +384,12 @@ Sn/√n is a continous distirbution and lie roughly between -3 and 3. By the cen
     data = sn_last_n()
     un = unique(data$n)
     hist(data$sn,
-         main = paste0('Histogram of Sn at n = ', un),
+         main = paste0('Sn at n = ', un),
          xlab='Sn',ylab='Frequency',
          cex.lab=2, cex.axis=2, cex.main=2,
          cex.sub=2,col='lightblue')
   })
-  observeEvent(input$go,{
-    output$plot5_txt=renderPrint({
-      cat('The histogram shows sum Sn at n = ')
-      clicked_n = input$plot_click1$x
-      if (is.null(clicked_n)) {
-        clicked_n = 10000
-      } else {
-        clicked_n = ceiling(clicked_n / 50) * 50
-      }
-      cat(clicked_n)
-      cat(', which would be approximate normal distribution as n gets larger.')
-    })
-  })
-  
+
   observeEvent(input$go,{
     output$with=renderPlot({
       dat=within()
@@ -449,7 +408,7 @@ Sn/√n is a continous distirbution and lie roughly between -3 and 3. By the cen
 
   observeEvent(input$go,{
     output$with_txt=renderPrint({
-      cat('The plot shows the proportion of Sn/√{nloglog(n)} that are bounded within ±√2. The porportion oscillate at small sample size and become more stable as sample size gets larger. The reason why the propotion does not reach 1 is that there might be some errors in the simulation.')
+      cat('The plot shows the proportion of Sn/√{nloglog(n)} that are bounded within ±√2. The proportion oscillate at small sample size and become more stable as sample size gets larger. The reason why the proportion does not reach 1 is that there might be some errors in the simulation.')
     })
   })
 #  
@@ -461,38 +420,16 @@ observeEvent(input$go,{
          main = 'First time Sn/√{nloglog(n)} hits ±√2 boundary',
          xlab='Sample size n',ylab='Frequency',
          cex.lab=2, cex.axis=2, cex.main=2,
-         cex.sub=2,col='blue')
+         cex.sub=2,col='blue',
+         breaks=30)
   })
 })
 
 observeEvent(input$go,{
    output$first_time_txt=renderPrint({
-     cat('The plot shows the distribution of the first time Sn/√{nloglog(n)} hits ±√2 boundary. Most of the repeats hit the boundary at the first 10 samples. And all of the repeats would hit the ±√2 boundary before samples size become 100. ')})
+     cat(paste0("The plot shows the distribution of the first time Sn/√{nloglog(n)} hits ±√2 boundary. Most of the repeats hit the boundary at the first 10 samples. And all of the repeats would hit the ±√2 boundary before samples size become ",maxtime(),". In theory, the expected value of the first the statistic hits the boundary is infinity, and the same is true for the maxmium value"))})
  })
  
- 
-# 
-#   observeEvent(input$go,{
-#     output$sta=renderPlot({
-#       dat=stats()
-#       g = dat %>%
-#         ggplot(aes(x = n, y = value, colour = type)) +
-#         ggtitle('Quantiles of Sn/√n')+
-#         xlab('Sample size n')+
-#         theme(axis.title=element_text(size=30),
-#               axis.text=element_text(size=21,face="bold"),
-#               title=element_text(size=25))+
-#         geom_line()
-#       g
-# 
-#     })
-# #   })
-#   observeEvent(input$go,{
-#     output$sta_txt=renderPrint({
-#       cat('The plot shows distribution of the max,75%, 50%, 25% quantiles and min of Sn/√n.')
-#     })
-#   })
-
    output$descriptions <- renderUI({
      withMathJax(includeMarkdown('info.md'))
    })
