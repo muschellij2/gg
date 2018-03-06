@@ -55,8 +55,8 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                 ),
                                 conditionalPanel(
                                   condition = "input.dist== 'normal'",
-                                  numericInput("mean", "mean:", value=0, step=0.05),
-                                  numericInput("sd", "sd: ", min=0.1, value=1, step=0.05)
+                                  numericInput("mean", "Mean:", value=0, step=0.05),
+                                  numericInput("sd", "Standard Deviation: ", min=0.1, value=1, step=0.05)
                                 ),
                                 conditionalPanel(
                                   condition = "input.dist == 'bernoulli'",
@@ -346,8 +346,10 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
     run_hist(data$sn_n,
              main = paste0('Sn/n at n = ', un),
              xlim = hist_lims(),xlab='Sn/n',
-             ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
-  })
+             ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue',
+             breaks = seq(min(data$sn_n), max(data$sn_n),
+                          length.out = 10))
+    })
   
   output$plot3=renderPlot({
     data = sn_last_n()
@@ -355,7 +357,9 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
     run_hist(data$sn_sqrtn,
              main = paste0('Sn/√n at n = ', un),
              xlim = hist_lims(),
-             xlab='Sn/√n',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
+             xlab='Sn/√n',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue',
+             breaks = seq(min(data$sn_sqrtn), max(data$sn_sqrtn),
+                          length.out = 10))
   })
 
   output$plot4=renderPlot({
@@ -364,22 +368,12 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
     run_hist(data$sn_loglog,
              main = paste0('Sn/√{nloglog(n)} at n = ', un),
              xlim = hist_lims(),
-             xlab='Sn/√{nloglog(n)}',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
+             xlab='Sn/√{nloglog(n)}',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue',
+             breaks = seq(min(data$sn_loglog), max(data$sn_loglog),
+                          length.out = 10))
     })
-  observeEvent(input$go,{
-    output$plot4_txt=renderPrint({
-      cat('The histograms shows Sn/√{nloglog(n)}, Sn/n, Sn/√n, Sn at n = ')
-      clicked_n = input$plot_click1$x
-      if (is.null(clicked_n)) {
-        clicked_n = 10000
-      } else {
-        clicked_n = ceiling(clicked_n / 50) * 50
-      }
-      cat(clicked_n)
-      cat(', which would be approximate normal distribution as n gets larger.')
-    })
-  })
   
+
   output$plot5=renderPlot({
     data = sn_last_n()
     un = unique(data$n)
@@ -387,9 +381,19 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
          main = paste0('Sn at n = ', un),
          xlab='Sn',ylab='Frequency',
          cex.lab=2, cex.axis=2, cex.main=2,
-         cex.sub=2,col='lightblue')
+         cex.sub=2,col='lightblue',
+         breaks = seq(min(data$sn), max(data$sn),
+                      length.out = 10))
   })
-
+  observeEvent(input$go,{
+    output$plot4_txt=renderPrint({
+      data = sn_last_n()
+      un = unique(data$n)
+      cat(paste0('The histograms shows Sn/√{nloglog(n)}, Sn/n, Sn/√n, Sn at n = ',un,
+                 ', which would be approximate normal distribution as n gets larger.'))
+    })
+  })
+  
   observeEvent(input$go,{
     output$with=renderPlot({
       dat=within()

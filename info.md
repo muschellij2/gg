@@ -40,7 +40,7 @@ $$
 
 #### So in some sense $S_n/n$ "squeezes" down to one point whereas $S_n/\sqrt{n}$ "spreads out", roughly between -3 and 3, and $S_n/\sqrt{n}$ is a continous distirbution. 
 
-#### It is a reasonable question then whether there is an in-between case, namely a sequence ${a_n}$ such that $\sqrt{n}$<$a_n$<$n$ converges to something between a constant and a distribution. The answer is given by the law of iterated logrithm 
+#### The sequence given by the law of iterated logarithm form a truncated distribution, which is 'in-between' the central limit theorem and strong law of large number. 
 
 
 
