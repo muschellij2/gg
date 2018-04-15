@@ -65,15 +65,13 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                 conditionalPanel(
                                   condition = "input.dist == 'poisson'",
                                   numericInput("lambda", "lambda: ", min=1, value=5, step=0.5)),
-                                numericInput("rep", "Number of replicates:", 200, min = 1),
+                                numericInput("rep", "Number of replicates:", value=200, min = 1),
                                 
                                 actionButton('go','Go'),
                                 checkboxInput("fix_x", "Fix x-axis in histogram", value = TRUE),
-                                helpText("Choose a single replicate"),
-                                numericInput("nX", "Track single replicate:", 1, min = 1),
-                                conditionalPanel(
-                                  condition = "input.dist == 'poisson'",
-                                  numericInput("lambda", "lambda: ", min=1, max=10, value=5, step=0.5))
+                                helpText("Choose the number of single replicate"),
+                                numericInput("nX", "Track single replicate:", value=1, min = 1)
+                           
                                 ),
                               # Show a plot of the generated distribution
                               mainPanel(
@@ -127,47 +125,47 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
 server <- function(input, output) {
   
   
-  DistX <- reactive( input$dist )
-  n.rep= eventReactive (input$go,{input$rep})
+  DistX <- reactive( input$dist)
+  n.rep= eventReactive (input$go,{input$rep},ignoreNULL = FALSE)
   n.X=reactive (input$nX)
   paramsX <- eventReactive (input$go,{
     switch(DistX(),
            "normal" = list(mean=input$mean, sd=input$sd),
            "bernoulli" = list(size=1,prob=input$p),
            "poisson" = list(lambda=input$lambda)
-    )} )
+    )},ignoreNULL = FALSE )
   rdistX <- eventReactive (input$go,{
     switch(DistX(),
            "normal" = "rnorm",
            "bernoulli" = "rbinom",
            "poisson" = "rpois"
-    )} )
+    )},ignoreNULL = FALSE )
   mean.dist=eventReactive (input$go,{
     switch(DistX(),
            "normal" = input$mean,
            "bernoulli" = input$p,
            "poisson" = input$lambda
-    )})
+    )},ignoreNULL = FALSE)
   sd.dist=eventReactive (input$go,{
     switch(DistX(),
            "normal" = input$sd,
            "bernoulli" = sqrt(input$p*(1-input$p)),
            "poisson" = sqrt(input$lambda)
-    )})
-  sampleDistX=eventReactive (input$go,{
+    )},ignoreNULL = FALSE)
+  sampleDistX=reactive ({
     res = do.call(rdistX(), c(10000*n.rep(), paramsX()))
     res = matrix(res,nrow=10000)
     res
   })
-  dat=eventReactive (input$go,{
+  dat=reactive({
     (sampleDistX()-mean.dist())/sd.dist()
   })
   
-  data_sn=eventReactive (input$go,{
+  data_sn=reactive({
     colCumsums(dat())
   })
   
-  sn_df_all=eventReactive (input$go,{
+  sn_df_all=reactive({
     df = data_sn()
     df = data.frame(df, n = 1:nrow(df))
     long = melt(df,id='n', value.name = "sn")
@@ -181,26 +179,26 @@ server <- function(input, output) {
     long
   })
   
-  sn_df=eventReactive (input$go,{
+  sn_df=reactive({
     # subset data
     long=sn_df_all()
     long = long[ (long$n %% 50 == 0),]
     long 
   })
   
-  time = eventReactive (input$go,{
+  time = reactive ({
     long = sn_df_all()
     log=long[c('replicate','sn_loglog')]
     t= sapply(unique(log$replicate),function(i) min(which(abs(log[log$replicate==i,]$sn_loglog)<sqrt(2))))
     t
   })
   
-  maxtime=eventReactive (input$go,{
+  maxtime=reactive ({
     t=time()
     max(t)
   })
   
-  track_single = reactive({
+  track_single_pre = reactive({
     long = sn_df_all()
     long = long[-c(1,2),]
     n.X=n.X()
@@ -208,11 +206,17 @@ server <- function(input, output) {
     longer = longer %>%
       select(-sn) %>%
       gather(type, value = value, sn_n, sn_sqrtn, sn_loglog,sqrtlog)
-    longer
+     longer
+      
+      })
+  track_single = reactive({
+  validate(
+    need(n.X()>n.rep(), "Number of replicate trying to track exceeds the range")
+  )
+  get(track_single_pre())
   })
 
-
- df_long =eventReactive (input$go,{
+ df_long =reactive ({
    long=sn_df()
    longer = long %>% 
     select(-sn, -loglog) %>% 
@@ -220,7 +224,7 @@ server <- function(input, output) {
    longer
    })
  
- df_longer=eventReactive (input$go,{
+ df_longer=reactive ({
    longer=df_long()
   shared_longer=SharedData$new(longer)
   shared_longer
@@ -282,7 +286,7 @@ server <- function(input, output) {
   ############
  
   
-  observeEvent(input$go,{
+
       output$plot1=renderPlotly({
         shared_longer=df_longer()
         labels <- c(sn_loglog = 'Sn√(nloglogn) -> [ -√2, √2] ', sn_n = " CLT: Sn/n -> 0",sn_sqrtn='LLN: Sn/√(n) -> N(0,1)')
@@ -302,9 +306,9 @@ server <- function(input, output) {
                                                  line$upper,line$lower)))
         p
       })
-  })
+  
  
-  observeEvent(input$go,{
+
     output$plot1_txt=renderPrint({
       cat('The plot shows the sum Sn divided by √nloglog(n), divided by n,divided by √n of the replicates. 
 
@@ -314,7 +318,7 @@ Sn/n would be close to 0 as n gets larger. By the law of large number we have Sn
 
 Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.')
     })
-  })
+
   
     output$track=renderPlotly({
       dat=track_single()
@@ -335,10 +339,9 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
         g
       })
 
-   observeEvent(input$go,{
+
     output$track_txt=renderPrint({
-      cat(paste0('The plot shows the Sum Sn divided by n, √n and √{nloglog(n)} for the replicate ',n.X(),'. For a single replicate, the plot of Sn/n is almost constant at 0; Sn/√n and Sn/√(nloglog(n)) has similar trend. Both of them oscillate when the sample size is small. As the sample size gets larger, they become more stable and Sn/√(nloglog(n)) would be closer to 0.'))
-    })
+      cat(paste0('The plot shows the Sum Sn divided by n, √n and √{nloglog(n)} for the replicate No.',n.X(),'. For a single replicate, the plot of Sn/n is almost constant at 0; Sn/√n and Sn/√(nloglog(n)) has similar trend. Both of them oscillate when the sample size is small. As the sample size gets larger, they become more stable and Sn/√(nloglog(n)) would be closer to 0.'))
   })
   output$plot2=renderPlot({
     data = sn_last_n()
@@ -385,16 +388,16 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
          breaks = seq(min(data$sn), max(data$sn),
                       length.out = 10))
   })
-  observeEvent(input$go,{
+  
     output$plot4_txt=renderPrint({
       data = sn_last_n()
       un = unique(data$n)
       cat(paste0('The histograms shows Sn/√{nloglog(n)}, Sn/n, Sn/√n, Sn at n = ',un,
                  ', which would be approximate normal distribution as n gets larger.'))
     })
-  })
   
-  observeEvent(input$go,{
+  
+
     output$with=renderPlot({
       dat=within()
       ggplot(data=dat,aes(x=n, y=pct))+
@@ -408,16 +411,13 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
         theme(plot.title = element_text(hjust = 0.5))+
       geom_hline(yintercept = 1)
       })
-  })
 
-  observeEvent(input$go,{
+
     output$with_txt=renderPrint({
       cat('The plot shows the proportion of Sn/√{nloglog(n)} that are bounded within ±√2. The proportion oscillate at small sample size and become more stable as sample size gets larger. The reason why the proportion does not reach 1 is that there might be some errors in the simulation.')
     })
-  })
-#  
 
-observeEvent(input$go,{
+
   output$first_time=renderPlot({
     data=time()
     hist(data,
@@ -427,12 +427,12 @@ observeEvent(input$go,{
          cex.sub=2,col='blue',
          breaks=30)
   })
-})
 
-observeEvent(input$go,{
+
+
    output$first_time_txt=renderPrint({
      cat(paste0("The plot shows the distribution of the first time Sn/√{nloglog(n)} hits ±√2 boundary. Most of the repeats hit the boundary at the first 10 samples. And all of the repeats would hit the ±√2 boundary before samples size become ",maxtime(),". In theory, the expected value of the first the statistic hits the boundary is infinity, and the same is true for the maxmium value"))})
- })
+
  
    output$descriptions <- renderUI({
      withMathJax(includeMarkdown('info.md'))
