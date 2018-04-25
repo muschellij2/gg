@@ -71,7 +71,7 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                 checkboxInput("fix_x", "Fix x-axis in histogram", value = TRUE),
                                 helpText("Choose the number of single replicate"),
                                 numericInput("nX", "Track single replicate:", value=1, min = 1)
-                           
+
                                 ),
                               # Show a plot of the generated distribution
                               mainPanel(
@@ -96,15 +96,7 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                            splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot3'), plotOutput('plot5'))
                            ),
                          
-                       #  plotOutput('plot2'),br(),br(),
-                       verbatimTextOutput('plot4_txt'),br(),br(),
-                        # 
-                        #         verbatimTextOutput('plot2_txt'),br(),br(),
-                        #         plotOutput('plot3'),br(),br(),
-                        #         verbatimTextOutput('plot3_txt'),br(),br(),
-                        # #        plotOutput('plot4'),br(),br(),
-                        #         plotOutput('plot5'),br(),br(),
-                        #         verbatimTextOutput('plot5_txt'),br(),br(),
+                      verbatimTextOutput('plot4_txt'),br(),br(),
                                 h2('Comparison of Sn/n, Sn/√n and Sn/√(nloglog(n)) plots for single replicate'), 
                                 plotlyOutput('track'),br(),br(),
                                 verbatimTextOutput('track_txt'),br(),br(),
@@ -123,8 +115,6 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
 
 
 server <- function(input, output) {
-  
-  
   DistX <- reactive( input$dist)
   n.rep= eventReactive (input$go,{input$rep},ignoreNULL = FALSE)
   n.X=reactive (input$nX)
@@ -133,13 +123,13 @@ server <- function(input, output) {
            "normal" = list(mean=input$mean, sd=input$sd),
            "bernoulli" = list(size=1,prob=input$p),
            "poisson" = list(lambda=input$lambda)
-    )},ignoreNULL = FALSE )
+    )},ignoreNULL = FALSE)
   rdistX <- eventReactive (input$go,{
     switch(DistX(),
            "normal" = "rnorm",
            "bernoulli" = "rbinom",
            "poisson" = "rpois"
-    )},ignoreNULL = FALSE )
+    )},ignoreNULL = FALSE)
   mean.dist=eventReactive (input$go,{
     switch(DistX(),
            "normal" = input$mean,
@@ -158,89 +148,152 @@ server <- function(input, output) {
     res
   })
   dat=reactive({
-    (sampleDistX()-mean.dist())/sd.dist()
+    (sampleDistX()-colMeans(sampleDistX()))/apply(sampleDistX(),2,sd)
   })
   
   data_sn=reactive({
     colCumsums(dat())
   })
+# observe({
+ # if (is.null(input$go)){
+ 
   
   sn_df_all=reactive({
-    df = data_sn()
-    df = data.frame(df, n = 1:nrow(df))
-    long = melt(df,id='n', value.name = "sn")
-    long$sn_n = long$sn / long$n
-    long$sn_sqrtn = long$sn / sqrt(long$n)
-    long$loglog = pmax(1e-7, log(log(long$n)))
-    long$sqrtlog=sqrt(long$loglog)
-    long$sn_loglog = long$sn / sqrt(long$n * long$loglog)
-    long$log_out = abs(long$sn_loglog) > sqrt(2)
-    names(long)[names(long) == 'variable'] <- 'replicate'
-    long
-  })
-  
+    if (is.null(input$go)){
+      load(file='/Users/alice/Documents/term2/shiny/gg/sn_df_all.rda')
+      sn_df_all
+    }else{
+           df = data_sn()
+           df = data.frame(df, n = 1:nrow(df))
+           long = melt(df,id='n', value.name = "sn")
+           long$sn_n = long$sn / long$n
+           long$sn_sqrtn = long$sn / sqrt(long$n)
+           long$loglog = pmax(1e-7, log(log(long$n)))
+           long$sqrtlog=sqrt(long$loglog)
+           long$sn_loglog = long$sn / sqrt(long$n * long$loglog)
+           long$log_out = abs(long$sn_loglog) > sqrt(2)
+           names(long)[names(long) == 'variable'] <- 'replicate'
+           long
+  }
+                    })
   sn_df=reactive({
-    # subset data
-    long=sn_df_all()
-    long = long[ (long$n %% 50 == 0),]
-    long 
+    if (is.null(input$go)){
+      load(file='/Users/alice/Documents/term2/shiny/gg/sn_df.rda')
+      sn_df
+    }else{
+      long=sn_df_all()
+      long = long[ (long$n %% 50 == 0),]
+      long
+     }
   })
-  
-  time = reactive ({
-    long = sn_df_all()
-    log=long[c('replicate','sn_loglog')]
-    t= sapply(unique(log$replicate),function(i) min(which(abs(log[log$replicate==i,]$sn_loglog)<sqrt(2))))
-    t
-  })
-  
+  # 
+  df_long =reactive ({
+    if (is.null(input$go)){
+    load(file='/Users/alice/Documents/term2/shiny/gg/df_long.rda')
+      df_long
+    }else{
+      long=sn_df()
+      longer = long %>%
+       select(-sn, -loglog) %>%
+       gather(type, value = value, sn_n, sn_sqrtn, sn_loglog)
+      longer
+    }
+      })
+
+   time = reactive ({
+     if (is.null(input$go)){
+       load(file='/Users/alice/Documents/term2/shiny/gg/time.rda')
+       time
+     }else{
+     long = sn_df_all()
+     log=long[c('replicate','sn_loglog')]
+     t= sapply(unique(log$replicate),function(i) min(which(abs(log[log$replicate==i,]$sn_loglog)<sqrt(2))))
+     t
+     }
+   })
+
+      within= reactive({
+        if (is.null(input$go)){
+          load(file='/Users/alice/Documents/term2/shiny/gg/within.rda')
+          within
+        }else{
+        long = sn_df()
+        dat=long %>%
+          group_by(n) %>%
+          summarize(pct = mean(!log_out))
+        dat
+        }
+     })
+      # line= reactive({
+      #   if (is.null(input$go)){
+      #     load(file='/Users/alice/Documents/term2/shiny/gg/line.rda')
+      #     line
+      #   }else{
+      #  line = data.frame(type=c( "sn_n","sn_sqrtn","sn_loglog"),upper=c(0,3,sqrt(2)),lower=c(0,-3,-sqrt(2)))
+      #   }
+      # })
+
+ #   }else{
+
+# 
+#   sn_df_all=reactive({
+#     df = data_sn()
+#     df = data.frame(df, n = 1:nrow(df))
+#     long = melt(df,id='n', value.name = "sn")
+#     long$sn_n = long$sn / long$n
+#     long$sn_sqrtn = long$sn / sqrt(long$n)
+#     long$loglog = pmax(1e-7, log(log(long$n)))
+#     long$sqrtlog=sqrt(long$loglog)
+#     long$sn_loglog = long$sn / sqrt(long$n * long$loglog)
+#     long$log_out = abs(long$sn_loglog) > sqrt(2)
+#     names(long)[names(long) == 'variable'] <- 'replicate'
+#     long
+#   })
+
+  # sn_df=reactive({
+  #   # subset data
+  #   long=sn_df_all()
+  #   long = long[ (long$n %% 50 == 0),]
+  #   long
+  # })
+
+  # time = reactive ({
+  #   long = sn_df_all()
+  #   log=long[c('replicate','sn_loglog')]
+  #   t= sapply(unique(log$replicate),function(i) min(which(abs(log[log$replicate==i,]$sn_loglog)<sqrt(2))))
+  #   t
+  # })
+
   maxtime=reactive ({
     t=time()
     max(t)
   })
-  
-  track_single_pre = reactive({
-    long = sn_df_all()
-    long = long[-c(1,2),]
-    n.X=n.X()
-    longer = long[ long$replicate == paste0('X',n.X), ]
-    longer = longer %>%
-      select(-sn) %>%
-      gather(type, value = value, sn_n, sn_sqrtn, sn_loglog,sqrtlog)
-     longer
-      
-      })
-  track_single = reactive({
-  validate(
-    need(n.X()>n.rep(), "Number of replicate trying to track exceeds the range")
-  )
-  get(track_single_pre())
-  })
 
- df_long =reactive ({
-   long=sn_df()
-   longer = long %>% 
-    select(-sn, -loglog) %>% 
-    gather(type, value = value, sn_n, sn_sqrtn, sn_loglog)
-   longer
-   })
- 
+ # df_long =reactive ({
+ #   long=sn_df()
+ #   longer = long %>%
+ #    select(-sn, -loglog) %>%
+ #    gather(type, value = value, sn_n, sn_sqrtn, sn_loglog)
+ #   longer
+ #   })
+ # 
  df_longer=reactive ({
    longer=df_long()
   shared_longer=SharedData$new(longer)
   shared_longer
  })
- 
 
- 
-  within= reactive({
-    long = sn_df()
-    dat=long %>%
-      group_by(n) %>%
-      summarize(pct = mean(!log_out))
-    dat
-  })
+ # within= reactive({
+ #   long = sn_df()
+ #   dat=long %>%
+ #     group_by(n) %>%
+ #     summarize(pct = mean(!log_out))
+ #   dat
+ # })
 
-  line = data.frame(type=c( "sn_n","sn_sqrtn","sn_loglog"),upper=c(0,3,sqrt(2)),lower=c(0,-3,-sqrt(2)))
+ line = data.frame(type=c( "sn_n","sn_sqrtn","sn_loglog"),upper=c(0,3,sqrt(2)),lower=c(0,-3,-sqrt(2)))
+   #}
+
 
   sn_last_n = reactive ({
     long = sn_df()
@@ -255,10 +308,31 @@ server <- function(input, output) {
          clicked_n = ceiling(clicked_n / 50) * 50
     }
     long = long[ long$n == clicked_n, ]
-    long
+    sn_last_n= long
   })
 
+ n.X = reactive ({
+   clicked_n = event_data("plotly_click")$x
+   if (is.null(clicked_n)) {
+     number=1
+   }else{
+     number=round((event_data("plotly_click")$pointNumber-event_data("plotly_click")$x/50)/200,0)
+  }
+   number
+   })
 
+ track_single = reactive({
+      long = sn_df_all()
+      long = long[-c(1,2),]
+      n.X=n.X()
+      longer = long[long$replicate == paste0('X',n.X), ]
+      longer = longer %>%
+        select(-sn) %>%
+        gather(type, value = value, sn_n, sn_sqrtn, sn_loglog,sqrtlog)
+      longer
+    })
+ 
+ 
    hist_lims = reactive ({
     if (input$fix_x) {
       data = sn_last_n()
@@ -284,10 +358,7 @@ server <- function(input, output) {
   ############
   # plot1
   ############
- 
-  
-
-      output$plot1=renderPlotly({
+    output$plot1=renderPlotly({
         shared_longer=df_longer()
         labels <- c(sn_loglog = 'Sn√(nloglogn) -> [ -√2, √2] ', sn_n = " CLT: Sn/n -> 0",sn_sqrtn='LLN: Sn/√(n) -> N(0,1)')
         gfac=ggplot(shared_longer, aes(n, value,group = replicate)) + 
@@ -319,29 +390,30 @@ Sn/n would be close to 0 as n gets larger. By the law of large number we have Sn
 Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.')
     })
 
-  
+
     output$track=renderPlotly({
       dat=track_single()
-        g=ggplot(dat,aes(x = n, y = value, colour = factor(type,labels=c("Sn/√(nloglog(n))", "Sn/n", "Sn/√n","√loglog")))) +
+      g=ggplot(dat,aes(x = n, y = value, colour = factor(type,labels=c("Sn/√(nloglog(n))", "Sn/n", "Sn/√n","√loglog")))) +
         ylab(label="value") +
         xlab("Sample size n")+
-        ggtitle(paste0('Plot the ',n.X(), ' single replicate'))+
-          theme(axis.title=element_text(size=15),
-                axis.text=element_text(size=13),
-                title=element_text(size=18),
-                strip.text = element_text(size = 15),
-                legend.text = element_text(size = 16, face = "bold"),
-                legend.position="bottom"
-                )+
-          scale_x_continuous(breaks=seq(0, 10000, 1000), limits=c(0,10000))+
-          labs(color = "Type")+
+        ggtitle(paste0('Single replicate',n.X()))+
+        theme(axis.title=element_text(size=15),
+              axis.text=element_text(size=13),
+              title=element_text(size=18),
+              strip.text = element_text(size = 15),
+              legend.text = element_text(size = 16),
+              legend.position=c(0.9,0.9))+
+              theme(legend.title=element_blank())+
+        scale_x_continuous(breaks=seq(0, 10000, 1000), limits=c(0,10000))+
+        scale_y_continuous(breaks=seq(-3, 3, 0.5), limits=c(-3,3))+
+        scale_fill_manual(values = colorRampPalette(brewer.pal(4, "Accent"))(4)) +
+        #scale_color_manual(value=1:4)+
         geom_line()
-        g
+      g
       })
-
-
+    
     output$track_txt=renderPrint({
-      cat(paste0('The plot shows the Sum Sn divided by n, √n and √{nloglog(n)} for the replicate No.',n.X(),'. For a single replicate, the plot of Sn/n is almost constant at 0; Sn/√n and Sn/√(nloglog(n)) has similar trend. Both of them oscillate when the sample size is small. As the sample size gets larger, they become more stable and Sn/√(nloglog(n)) would be closer to 0.'))
+      cat(paste0('The plot shows the Sum Sn divided by n, √n and √{nloglog(n)} for the replicate',n.X(),'. For a single replicate, the plot of Sn/n is almost constant at 0; Sn/√n and Sn/√(nloglog(n)) has similar trend. Both of them oscillate when the sample size is small. As the sample size gets larger, they become more stable and Sn/√(nloglog(n)) would be closer to 0.'))
   })
   output$plot2=renderPlot({
     data = sn_last_n()
@@ -422,7 +494,7 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
     data=time()
     hist(data,
          main = 'First time Sn/√{nloglog(n)} hits ±√2 boundary',
-         xlab='Sample size n',ylab='Frequency',
+         xlab='Sample size first crossing boundary',ylab='Frequency',
          cex.lab=2, cex.axis=2, cex.main=2,
          cex.sub=2,col='blue',
          breaks=30)
