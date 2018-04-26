@@ -8,13 +8,14 @@ library(crosstalk)
 library(tidyr)
 library(dplyr)
 library(gridExtra)
+library(grDevices)
 ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                           tabPanel("Descriptions", fluidPage(
                             uiOutput('descriptions')
                           )),
                           tabPanel("App", fluidPage(
-                                                    tags$head(
-                                                      tags$style(HTML(" @import url('https://fonts.googleapis.com/css?family=Roboto:400,700');
+                            tags$head(
+                              tags$style(HTML(" @import url('https://fonts.googleapis.com/css?family=Roboto:400,700');
                                                                       h1{
                                                                       font-family: 'Roboto', cursive;
                                                                       font-weight: 500;
@@ -42,9 +43,9 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                                                       # border-style: none;
                                                                       # }
                                                                       "))
-                                                      ),
-                              headerPanel("Law of Iterated Logarithm"),
-                              sidebarLayout(
+                            ),
+                            headerPanel("Law of Iterated Logarithm"),
+                            sidebarLayout(
                               sidebarPanel(
                                 helpText("Create random variable by setting distribution and parameter values"),
                                 selectInput("dist", "Distribution",
@@ -74,7 +75,7 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                 conditionalPanel(
                                   condition = "input.dist == 'poisson'",
                                   numericInput("lambda", "lambda: ", min=1, max=10, value=5, step=0.5))
-                                ),
+                              ),
                               # Show a plot of the generated distribution
                               mainPanel(
                                 h1('Instruction'), 
@@ -86,27 +87,27 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                                        line-height: 1.5;
                                                        color: black;
                                                      }"
-                         )
+                                )
                                 ),
                                 h4('The simulation generates independent and identically ditributed random variables with user-defined number of replicates.The sum of the random variables Sn are calculated,and Sn are dependent for i =1,2,..n.') ,
                                 h2("Comparison of Sn/n, Sn/√n, Sn/√(nloglog(n)) plots"),
                                 plotlyOutput('plot1',height = 600),br(),br(),
                                 verbatimTextOutput('plot1_txt'),br(),br(),
                                 h3('The histograms shows the corresponding frequency of n=10000 by default. Users can change it by clicking the Sn plots.'),
-                          fluidRow(
-                           splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot4'), plotOutput('plot2')),
-                           splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot3'), plotOutput('plot5'))
-                           ),
-                         
-                       #  plotOutput('plot2'),br(),br(),
-                       verbatimTextOutput('plot4_txt'),br(),br(),
-                        # 
-                        #         verbatimTextOutput('plot2_txt'),br(),br(),
-                        #         plotOutput('plot3'),br(),br(),
-                        #         verbatimTextOutput('plot3_txt'),br(),br(),
-                        # #        plotOutput('plot4'),br(),br(),
-                        #         plotOutput('plot5'),br(),br(),
-                        #         verbatimTextOutput('plot5_txt'),br(),br(),
+                                fluidRow(
+                                  splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot4'), plotOutput('plot2')),
+                                  splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot3'), plotOutput('plot5'))
+                                ),
+                                
+                                #  plotOutput('plot2'),br(),br(),
+                                verbatimTextOutput('plot4_txt'),br(),br(),
+                                # 
+                                #         verbatimTextOutput('plot2_txt'),br(),br(),
+                                #         plotOutput('plot3'),br(),br(),
+                                #         verbatimTextOutput('plot3_txt'),br(),br(),
+                                # #        plotOutput('plot4'),br(),br(),
+                                #         plotOutput('plot5'),br(),br(),
+                                #         verbatimTextOutput('plot5_txt'),br(),br(),
                                 h2('Comparison of Sn/n, Sn/√n and Sn/√(nloglog(n)) plots for single replicate'), 
                                 plotlyOutput('track'),br(),br(),
                                 verbatimTextOutput('track_txt'),br(),br(),
@@ -115,7 +116,7 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                 verbatimTextOutput('with_txt'),br(),br(),
                                 plotOutput('first_time'),br(),br(),
                                 verbatimTextOutput('first_time_txt'),br(),br(),
-                          h3('With simulations, we can find out that the as n gets infinity, Sn/√(nloglog(n)) would oscillates between ±√2, by the law of iterated logarithm')
+                                h3('With simulations, we can find out that the as n gets infinity, Sn/√(nloglog(n)) would oscillates between ±√2, by the law of iterated logarithm')
                               )
                             )
                           )
@@ -211,24 +212,24 @@ server <- function(input, output) {
       gather(type, value = value, sn_n, sn_sqrtn, sn_loglog,sqrtlog)
     longer
   })
-
-
- df_long =eventReactive (input$go,{
-   long=sn_df()
-   longer = long %>% 
-    select(-sn, -loglog) %>% 
-    gather(type, value = value, sn_n, sn_sqrtn, sn_loglog)
-   longer
-   })
- 
- df_longer=eventReactive (input$go,{
-   longer=df_long()
-  shared_longer=SharedData$new(longer)
-  shared_longer
- })
- 
-
- 
+  
+  
+  df_long =eventReactive (input$go,{
+    long=sn_df()
+    longer = long %>% 
+      select(-sn, -loglog) %>% 
+      gather(type, value = value, sn_n, sn_sqrtn, sn_loglog)
+    longer
+  })
+  
+  df_longer=eventReactive (input$go,{
+    longer=df_long()
+    shared_longer=SharedData$new(longer)
+    shared_longer
+  })
+  
+  
+  
   within= reactive({
     long = sn_df()
     dat=long %>%
@@ -236,27 +237,27 @@ server <- function(input, output) {
       summarize(pct = mean(!log_out))
     dat
   })
-
+  
   line = data.frame(type=c( "sn_n","sn_sqrtn","sn_loglog"),upper=c(0,3,sqrt(2)),lower=c(0,-3,-sqrt(2)))
-
+  
   sn_last_n = reactive ({
     long = sn_df()
     clicked_n = event_data("plotly_click")$x
     if (is.null(clicked_n)) {
       clicked_n = max(long$n)
-       }else if (clicked_n>10000) {
-         clicked_n = max(long$n)
-       }else if (clicked_n<0) {
-         clicked_n = min(long$n) 
-       }else {
-         clicked_n = ceiling(clicked_n / 50) * 50
+    }else if (clicked_n>10000) {
+      clicked_n = max(long$n)
+    }else if (clicked_n<0) {
+      clicked_n = min(long$n) 
+    }else {
+      clicked_n = ceiling(clicked_n / 50) * 50
     }
     long = long[ long$n == clicked_n, ]
     long
   })
-
-
-   hist_lims = reactive ({
+  
+  
+  hist_lims = reactive ({
     if (input$fix_x) {
       data = sn_last_n()
       lim = range(c(data$sn_n, data$sn_sqrtn,
@@ -267,44 +268,44 @@ server <- function(input, output) {
     }
     lim
   })
-
+  
   run_hist = function(data, xlim, ...) {
     if (is.null(xlim)) {
       hist(data, ...)
-
+      
     } else {
       hist(data, xlim = xlim, ...)
-
+      
     }
   }
   # 
   ############
   # plot1
   ############
- 
+  
   
   observeEvent(input$go,{
-      output$plot1=renderPlotly({
-        shared_longer=df_longer()
-        labels <- c(sn_loglog = 'Sn√(nloglogn) -> [ -√2, √2] ', sn_n = " CLT: Sn/n -> 0",sn_sqrtn='LLN: Sn/√(n) -> N(0,1)')
-        gfac=ggplot(shared_longer, aes(n, value,group = replicate)) + 
-          geom_line(alpha=0.5,color='lightblue') + 
-          facet_wrap(~type, scales = "free_x", ncol = 1,labeller = labeller(type=labels))+
-          geom_hline(data=line, aes(yintercept=upper),linetype="dashed", size=0.5, colour="red")+
-          geom_hline(data=line, aes(yintercept=lower),linetype="dashed", size=0.5, colour="red")+
-          theme(axis.title=element_text(size=15),
-                axis.text=element_text(size=10),
-                title=element_text(size=23),
-                strip.text = element_text(size = 15))+
-          xlab('Sample size n')+
-          xlim(1,10000)
-        p=gfac+scale_y_continuous(labels=function(x) sprintf("%.2f", x),
-                breaks = sort(c(ggplot_build(gfac)$layout$panel_ranges[[1]]$y.major_source, 
-                                                 line$upper,line$lower)))
-        p
-      })
+    output$plot1=renderPlotly({
+      shared_longer=df_longer()
+      labels <- c(sn_loglog = 'Sn√(nloglogn) -> [ -√2, √2] ', sn_n = " CLT: Sn/n -> 0",sn_sqrtn='LLN: Sn/√(n) -> N(0,1)')
+      gfac=ggplot(shared_longer, aes(n, value,group = replicate)) + 
+        geom_line(alpha=0.5,color='lightblue') + 
+        facet_wrap(~type, scales = "free_x", ncol = 1,labeller = labeller(type=labels))+
+        geom_hline(data=line, aes(yintercept=upper),linetype="dashed", size=0.5, colour="red")+
+        geom_hline(data=line, aes(yintercept=lower),linetype="dashed", size=0.5, colour="red")+
+        theme(axis.title=element_text(size=15),
+              axis.text=element_text(size=10),
+              title=element_text(size=23),
+              strip.text = element_text(size = 15))+
+        xlab('Sample size n')+
+        xlim(1,10000)
+      p=gfac+scale_y_continuous(labels=function(x) sprintf("%.2f", x),
+                                breaks = sort(c(ggplot_build(gfac)$layout$panel_ranges[[1]]$y.major_source, 
+                                                line$upper,line$lower)))
+      p
+    })
   })
- 
+  
   observeEvent(input$go,{
     output$plot1_txt=renderPrint({
       cat('The plot shows the sum Sn divided by √nloglog(n), divided by n,divided by √n of the replicates. 
@@ -317,26 +318,26 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
     })
   })
   
-    output$track=renderPlotly({
-      dat=track_single()
-        g=ggplot(dat,aes(x = n, y = value, colour = factor(type,labels=c("Sn/√(nloglog(n))", "Sn/n", "Sn/√n","√loglog")))) +
-        ylab(label="value") +
-        xlab("Sample size n")+
-        ggtitle(paste0('Plot the ',n.X(), ' single replicate'))+
-          theme(axis.title=element_text(size=15),
-                axis.text=element_text(size=13),
-                title=element_text(size=18),
-                strip.text = element_text(size = 15),
-                legend.text = element_text(size = 16, face = "bold"),
-                legend.position="bottom"
-                )+
-          scale_x_continuous(breaks=seq(0, 10000, 1000), limits=c(0,10000))+
-          labs(color = "Type")+
-        geom_line()
-        g
-      })
-
-   observeEvent(input$go,{
+  output$track=renderPlotly({
+    dat=track_single()
+    g=ggplot(dat,aes(x = n, y = value, colour = factor(type,labels=c("Sn/√(nloglog(n))", "Sn/n", "Sn/√n","√loglog")))) +
+      ylab(label="value") +
+      xlab("Sample size n")+
+      ggtitle(paste0('Plot the ',n.X(), ' single replicate'))+
+      theme(axis.title=element_text(size=15),
+            axis.text=element_text(size=13),
+            title=element_text(size=18),
+            strip.text = element_text(size = 15),
+            legend.text = element_text(size = 16, face = "bold"),
+            legend.position="bottom"
+      )+
+      scale_x_continuous(breaks=seq(0, 10000, 1000), limits=c(0,10000))+
+      labs(color = "Type")+
+      geom_line()
+    g
+  })
+  
+  observeEvent(input$go,{
     output$track_txt=renderPrint({
       cat(paste0('The plot shows the Sum Sn divided by n, √n and √{nloglog(n)} for the replicate ',n.X(),'. For a single replicate, the plot of Sn/n is almost constant at 0; Sn/√n and Sn/√(nloglog(n)) has similar trend. Both of them oscillate when the sample size is small. As the sample size gets larger, they become more stable and Sn/√(nloglog(n)) would be closer to 0.'))
     })
@@ -344,30 +345,63 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
   output$plot2=renderPlot({
     data = sn_last_n()
     un = unique(data$n)
-    run_hist(data$sn_n,
-             main = paste0('Sn/n at n = ', un),
-             xlim = hist_lims(),xlab='Sn/n',
-             ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
+    x = data$sn_n
+    print(paste0("N_Sn_n=", length(x)))
+    print(paste0("N_real_Sn_n=", sum(!is.na(x))))
+    print(range(x))
+    print(hist_lims())
+    print(length(nclass.Sturges(x)))
+    
+    myhist = run_hist(
+      plot = FALSE,
+      x,
+      main = paste0('Sn/n at n = ', un),
+      xlim = hist_lims(),xlab='Sn/n',
+      ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
+    print(length(myhist$breaks))
+    plot(myhist)        
   })
   
   output$plot3=renderPlot({
     data = sn_last_n()
     un = unique(data$n)
-    run_hist(data$sn_sqrtn,
-             main = paste0('Sn/√n at n = ', un),
-             xlim = hist_lims(),
-             xlab='Sn/√n',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
+    x = data$sn_sqrtn
+    print(paste0("N_Sn_sqrtn=", length(x)))
+    print(paste0("N_real_Sn_sqrtn=", sum(!is.na(x))))
+    print(range(x))
+    print(hist_lims())
+    print(length(nclass.Sturges(x)))
+    
+    myhist = run_hist(
+      plot = FALSE,
+      x,
+      main = paste0('Sn/√n at n = ', un),
+      xlim = hist_lims(),
+      xlab='Sn/√n',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
+    print(length(myhist$breaks))
+    plot(myhist)    
   })
-
-  output$plot4=
-    ({
+  
+  output$plot4=renderPlot({
     data = sn_last_n()
     un = unique(data$n)
-    run_hist(data$sn_loglog,
-             main = paste0('Sn/√{nloglog(n)} at n = ', un),
-             xlim = hist_lims(),
-             xlab='Sn/√{nloglog(n)}',ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
-    })
+    x = data$sn_loglog
+    print(paste0("N_loglog=", length(x)))
+    print(paste0("N_real_loglog=", sum(!is.na(x))))
+    print(range(x))
+    print(hist_lims())
+    print(length(nclass.Sturges(x)))
+    
+    myhist = run_hist(
+      plot = FALSE,
+      x,
+      main = paste0('Sn/√{nloglog(n)} at n = ', un),
+      xlim = hist_lims(),
+      xlab='Sn/√{nloglog(n)}',ylab='Frequency',cex.lab=2, 
+      cex.axis=2, cex.main=2, cex.sub=2,col='lightblue')
+    print(length(myhist$breaks))
+    plot(myhist)
+  })
   observeEvent(input$go,{
     output$plot4_txt=renderPrint({
       cat('The histograms shows Sn/√{nloglog(n)}, Sn/n, Sn/√n, Sn at n = ')
@@ -391,50 +425,50 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
          cex.lab=2, cex.axis=2, cex.main=2,
          cex.sub=2,col='lightblue')
   })
-
+  
   observeEvent(input$go,{
     output$with=renderPlot({
       dat=within()
       ggplot(data=dat,aes(x=n, y=pct))+
-           ylim(c(0.90, 1))+
-      xlab('Sample size n')+ylab('Proportion')+
+        ylim(c(0.90, 1))+
+        xlab('Sample size n')+ylab('Proportion')+
         ggtitle('Proportion of Sn/√{nloglog(n)} within √2 boundary')+
-      theme(axis.title=element_text(size=15),
-            axis.text=element_text(size=15,face="bold"),
-            title=element_text(size=23))+
+        theme(axis.title=element_text(size=15),
+              axis.text=element_text(size=15,face="bold"),
+              title=element_text(size=23))+
         geom_line()+
         theme(plot.title = element_text(hjust = 0.5))+
-      geom_hline(yintercept = 1)
-      })
+        geom_hline(yintercept = 1)
+    })
   })
-
+  
   observeEvent(input$go,{
     output$with_txt=renderPrint({
       cat('The plot shows the proportion of Sn/√{nloglog(n)} that are bounded within ±√2. The proportion oscillate at small sample size and become more stable as sample size gets larger. The reason why the proportion does not reach 1 is that there might be some errors in the simulation.')
     })
   })
-#  
-
-observeEvent(input$go,{
-  output$first_time=renderPlot({
-    data=time()
-    hist(data,
-         main = 'First time Sn/√{nloglog(n)} hits ±√2 boundary',
-         xlab='Sample size n',ylab='Frequency',
-         cex.lab=2, cex.axis=2, cex.main=2,
-         cex.sub=2,col='blue',
-         breaks=30)
+  #  
+  
+  observeEvent(input$go,{
+    output$first_time=renderPlot({
+      data=time()
+      hist(data,
+           main = 'First time Sn/√{nloglog(n)} hits ±√2 boundary',
+           xlab='Sample size n',ylab='Frequency',
+           cex.lab=2, cex.axis=2, cex.main=2,
+           cex.sub=2,col='blue',
+           breaks=30)
+    })
   })
-})
-
-observeEvent(input$go,{
-   output$first_time_txt=renderPrint({
-     cat(paste0("The plot shows the distribution of the first time Sn/√{nloglog(n)} hits ±√2 boundary. Most of the repeats hit the boundary at the first 10 samples. And all of the repeats would hit the ±√2 boundary before samples size become ",maxtime(),". In theory, the expected value of the first the statistic hits the boundary is infinity, and the same is true for the maxmium value"))})
- })
- 
-   output$descriptions <- renderUI({
-     withMathJax(includeMarkdown('info.md'))
-   })
- }
+  
+  observeEvent(input$go,{
+    output$first_time_txt=renderPrint({
+      cat(paste0("The plot shows the distribution of the first time Sn/√{nloglog(n)} hits ±√2 boundary. Most of the repeats hit the boundary at the first 10 samples. And all of the repeats would hit the ±√2 boundary before samples size become ",maxtime(),". In theory, the expected value of the first the statistic hits the boundary is infinity, and the same is true for the maxmium value"))})
+  })
+  
+  output$descriptions <- renderUI({
+    withMathJax(includeMarkdown('info.md'))
+  })
+}
 
 shinyApp(ui = ui, server = server)
