@@ -9,6 +9,14 @@ library(tidyr)
 library(dplyr)
 library(gridExtra)
 library(grDevices)
+
+load(file='sn_df_all.rda')
+load(file='sn_df.rda')
+load(file='df_long.rda')
+load(file='time.rda')
+load(file='within.rda')
+
+
 ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                           tabPanel("Descriptions", fluidPage(
                             uiOutput('descriptions')
@@ -164,7 +172,6 @@ server <- function(input, output) {
   
   sn_df_all=reactive({
     if (is.null(input$go)){
-      load(file='sn_df_all.rda')
       sn_df_all
     } else{
       df = data_sn()
@@ -182,7 +189,6 @@ server <- function(input, output) {
   })
   sn_df=reactive({
     if (is.null(input$go)){
-      load(file='sn_df.rda')
       sn_df
     }else{
       long=sn_df_all()
@@ -193,7 +199,6 @@ server <- function(input, output) {
   # 
   df_long =reactive ({
     if (is.null(input$go)){
-      load(file='df_long.rda')
       df_long
     }else{
       long=sn_df()
@@ -206,7 +211,6 @@ server <- function(input, output) {
   
   time = reactive ({
     if (is.null(input$go)){
-      load(file='time.rda')
       time
     }else{
       long = sn_df_all()
@@ -218,7 +222,6 @@ server <- function(input, output) {
   
   within= reactive({
     if (is.null(input$go)){
-      load(file='within.rda')
       within
     }else{
       long = sn_df()
