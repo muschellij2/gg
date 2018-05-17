@@ -10,11 +10,11 @@ library(dplyr)
 library(gridExtra)
 library(grDevices)
 
-load(file='sn_df_all.rda')
-load(file='sn_df.rda')
-load(file='df_long.rda')
-load(file='time.rda')
-load(file='within.rda')
+# load(file='sn_df_all.rda')
+# load(file='sn_df.rda')
+# load(file='df_long.rda')
+# load(file='time.rda')
+# load(file='within.rda')
 
 
 ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
@@ -100,23 +100,23 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                 h4('The simulation generates independent and identically ditributed random variables with user-defined number of replicates.The sum of the random variables Sn are calculated,and Sn are dependent for i =1,2,..n.') ,
                                 h2("Comparison of Sn/n, Sn/√n, Sn/√(nloglog(n)) plots"),
                                 plotlyOutput('plot1',height = 600),br(),br(),
-                                verbatimTextOutput('plot1_txt'),br(),br(),
+                                h4(textOutput('plot1_txt')),br(),br(),
                                 h3('The histograms shows the corresponding frequency of n=10000 by default. Users can change it by clicking the Sn plots.'),
                                 fluidRow(
                                   splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot4'), plotOutput('plot2')),
                                   splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot3'), plotOutput('plot5'))
                                 ),
                                 
-                                verbatimTextOutput('plot4_txt'),br(),br(),
+                                h4(textOutput('plot4_txt')),br(),br(),
                                 
                                 h2('Comparison of Sn/n, Sn/√n and Sn/√(nloglog(n)) plots for single replicate'), 
                                 plotlyOutput('track'),br(),br(),
-                                verbatimTextOutput('track_txt'),br(),br(),
+                                h4(textOutput('track_txt')),br(),br(),
                                 h2('Explore the boundary of Law of Iterated Logarithm'), 
                                 plotOutput('with'),
-                                verbatimTextOutput('with_txt'),br(),br(),
+                                h4(textOutput('with_txt')),br(),br(),
                                 plotOutput('first_time'),br(),br(),
-                                verbatimTextOutput('first_time_txt'),br(),br(),
+                                h4(textOutput('first_time_txt')),br(),br(),
                                 h3('With simulations, we can find out that the as n gets infinity, Sn/√(nloglog(n)) would oscillates between ±√2, by the law of iterated logarithm')
                               )
                             )
@@ -387,14 +387,14 @@ server <- function(input, output) {
   
   
   
-  output$plot1_txt=renderPrint({
-    cat('The plot shows the sum Sn divided by √nloglog(n), divided by n,divided by √n of the replicates. 
+  output$plot1_txt=renderText({
+    'The plot shows the sum Sn divided by √nloglog(n), divided by n,divided by √n of the replicates. 
 
 Sn/√nloglog(n) would oscillate between ±√2.
 
 Sn/n would be close to 0 as n gets larger. By the law of large number we have Sn/n → 0 almost surely.
 
-Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.')
+Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.'
   })
   
   
@@ -420,8 +420,15 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
     g
   })
   
-  output$track_txt=renderPrint({
-    cat(paste0('The plot shows the Sum Sn divided by n, √n and √{nloglog(n)} for the replicate',n.X(),'. For a single replicate, the plot of Sn/n is almost constant at 0; Sn/√n and Sn/√(nloglog(n)) has similar trend. Both of them oscillate when the sample size is small. As the sample size gets larger, they become more stable and Sn/√(nloglog(n)) would be closer to 0.'))
+  output$track_txt=renderText({
+    paste0('The plot shows the Sum Sn divided by n, √n and √{nloglog(n)}", 
+           " for the replicate',
+           n.X(),
+           '. For a single replicate, the plot of Sn/n is almost ", 
+           "constant at 0; Sn/√n and Sn/√(nloglog(n)) has similar ", 
+           "trend. Both of them oscillate when the sample size is small.", 
+           " As the sample size gets larger, they become more stable and ", 
+           "Sn/√(nloglog(n)) would be closer to 0.')
   })
   output$plot2=renderPlot({
     data = sn_last_n()
@@ -472,11 +479,13 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
                       length.out = 10))
   })
   
-  output$plot4_txt=renderPrint({
+  output$plot4_txt=renderText({
     data = sn_last_n()
     un = unique(data$n)
-    cat(paste0('The histograms shows Sn/√{nloglog(n)}, Sn/n, Sn/√n, Sn at n = ',un,
-               ', which would be approximate normal distribution as n gets larger.'))
+    paste0('The histograms shows Sn/√{nloglog(n)}, Sn/n, ", 
+               "Sn/√n, Sn at n = ', un,
+               ', which would be approximate normal ', 
+               'distribution as n gets larger.')
   })
   
   
@@ -496,7 +505,7 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
   })
   
   
-  output$with_txt=renderPrint({
+  output$with_txt=renderText({
     cat('The plot shows the proportion of Sn/√{nloglog(n)} that are bounded within ±√2. The proportion oscillate at small sample size and become more stable as sample size gets larger. The reason why the proportion does not reach 1 is that there might be some errors in the simulation.')
   })
   
@@ -513,8 +522,16 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
   
   
   
-  output$first_time_txt=renderPrint({
-    cat(paste0("The plot shows the distribution of the first time Sn/√{nloglog(n)} hits ±√2 boundary. Most of the repeats hit the boundary at the first 10 samples. And all of the repeats would hit the ±√2 boundary before samples size become ",maxtime(),". In theory, the expected value of the first the statistic hits the boundary is infinity, and the same is true for the maxmium value"))})
+  output$first_time_txt=renderText({
+    paste0("The plot shows the distribution of the ", 
+           "first time Sn/√{nloglog(n)} hits ±√2 boundary. ", 
+           "Most of the repeats hit the boundary at the first ", 
+           "10 samples. And all of the repeats would hit the ", 
+           "±√2 boundary before samples size become ", maxtime(), 
+           ". In theory, the expected value of the first the ", 
+           "statistic hits the boundary is infinity, and the ", 
+           "same is true for the maxmium value")
+    })
   
   
   output$descriptions <- renderUI({
