@@ -392,13 +392,7 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
     }else{
       dat=track_single1()
     }
-  #   plot_ly(dat, x = ~n, y = ~value,type = 'scatter', mode = 'lines',
-  #           color = dat$type  , name = c(sn_loglog="Sn/√(nloglog(n))", sn_n = "Sn/n", sn_sqrtn="Sn/√n",sqrtlog="√loglog(n)"))
-  #     
-  #   #
-  #    # add_markers(hoverinfo="text" ,text = ~(x+y)
-  #     #            hovermode="closest")
-  # })
+
     Type = dat$type
     Type[dat$type=='sn_n'] = "Sn/n"
     Type[dat$type=='sn_sqrtn'] = "Sn/√n"
@@ -419,15 +413,10 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
       scale_y_continuous(breaks=seq(-3, 3, 0.5), limits=c(-3,3))+
       scale_fill_manual(values = colorRampPalette(brewer.pal(4, "Accent"))(4)) +
       geom_line()
-   ggplotly(g)
-   #,tooltip=c("x", "y",'type'))
-  #   ggplotly(g, color = factor(type,labels=c("Sn/√(nloglog(n))", "Sn/n", "Sn/√n","√loglog")),colors='Set1') %>%layout(legend = list(orientation = "h",   # show entries horizontally
-  #                                       xanchor = "center",  # use center of legend as anchor
-  #                                       x = 0.5,y=-0.5)) %>% 
-  #     color = info_all[,1],colors='Set1',
-  #   add_markers(hoverinfo="text" ,text = ~paste('x+y',
-  #                                               '</br> Sample: ',type))
-  # 
+   ggplotly(g)%>%
+     layout(legend = list(orientation = "h",   # show entries horizontally
+                          xanchor = "center",  # use center of legend as anchor
+                          y = -0.5),font = list(size = 5)   )
    })
 
   output$track_txt=renderPrint({
