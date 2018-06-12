@@ -76,6 +76,7 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                 
                               ),
                               
+                              
                               # Show a plot of the generated distribution
                               mainPanel(
                                 h1('Instruction'), 
@@ -557,11 +558,11 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
 
   output$summary <- renderPrint({
     if(input$dist == 'normal'){
-      cat('Data is generated from normal distribution with mean =',input$mean,'and standard deviation =',input$sd,'.')
+      cat('Data is generated from normal distribution with mean =',input$mean,'and standard deviation =',input$sd)
     }else if (input$dist=='bernoulli'){
-      cat('Data is generated from bernoulli distribution with p  =',input$p,'.')
+      cat('Data is generated from bernoulli distribution with p  =',input$p)
     }else{
-      cat('Data is generated from normal distribution with lambda =',input$lambda,'.')
+      cat('Data is generated from normal distribution with lambda =',input$lambda)
     }
   })
   
