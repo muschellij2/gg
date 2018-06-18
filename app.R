@@ -8,6 +8,7 @@ library(crosstalk)
 library(tidyr)
 library(dplyr)
 library(gridExtra)
+library(shinycssloaders)
 library(grDevices)
 ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                           tabPanel("Descriptions", fluidPage(
@@ -37,7 +38,7 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                                                       figure {
                                                                           margin: 0 0 1rem;
                                                                       }
-                                                                      
+
                                                                       # img {
                                                                       # vertical-align: middle;
                                                                       # border-style: none;
@@ -79,48 +80,55 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                               
                               # Show a plot of the generated distribution
                               mainPanel(
+                                tabsetPanel(
+                                  tabPanel("Summary", 
+                                           
                                 h1('Instruction'), 
                                 h4("The APP aims to demonstrate the Law of the Iterated Logarithm. Users can select Normal, Bernoulli, Poisson distributions and set up corresponding parameters for random variable generation."),
-                                tags$head(tags$style("
-                                                     h4{
-                                                       font-family: 'Roboto', cursive;
-                                                       font-weight: 500;
-                                                       line-height: 1.5;
-                                                       color: black;
-                                                     }"
-                                )
-                                ),
                                 h4('The simulation generates independent and identically ditributed random variables with user-defined number of replicates.The sum of the random variables Sn are calculated,and Sn are dependent for i =1,2,..n.') ,
                                 br(),br(),
-                                verbatimTextOutput('summary'),br(),
-                                
-                                
+                                verbatimTextOutput('summary'),
+                                 
                                 h3("Comparison of Sn/n, Sn/√n, Sn/√(nloglog(n)) plots"),
-                                plotlyOutput('plot1',height = 600),br(),br(),
+                                plotlyOutput('plot1',height = 600)%>% withSpinner(),
+                                br(),br(),
                                 verbatimTextOutput('plot1_txt'),br(),br(),
                                 h4('The histograms shows the corresponding frequency of n=10000 by default. Users can change it by clicking the Sn plots.'),
                                 fluidRow(
-                                  splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot4'), plotOutput('plot2')),
-                                  splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot3'), plotOutput('plot5'))
+                                  splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot4')%>% withSpinner(), plotOutput('plot2')%>% withSpinner()),
+                                  splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot3')%>% withSpinner(), plotOutput('plot5')%>% withSpinner())
                                 ),
                                 
-                                verbatimTextOutput('plot4_txt'),br(),br(),
+                                verbatimTextOutput('plot4_txt'),
+                                br(),br()
+                              #  h4('With simulations, we can find out that the as n gets infinity, Sn/√(nloglog(n)) would oscillates between ±√2, by the law of iterated logarithm')
+                                    ),
                                 
+                                tabPanel("Single replicate", 
                                 h3('Comparison of Sn/n, Sn/√n and Sn/√(nloglog(n)) plots for a single replicate'), 
-                                plotlyOutput('track'),br(),br(),
-                                verbatimTextOutput('track_txt'),br(),br(),
-                                h3('Explore the boundary of Law of Iterated Logarithm'), 
-                                plotOutput('with'),
-                                verbatimTextOutput('with_txt'),br(),br(),
-                                plotOutput('first_time'),br(),br(),
-                                verbatimTextOutput('first_time_txt'),br(),br(),
-                                h4('With simulations, we can find out that the as n gets infinity, Sn/√(nloglog(n)) would oscillates between ±√2, by the law of iterated logarithm')
-                              )
+                                plotlyOutput('track')%>% withSpinner(),
+                                br(),br(),
+                                verbatimTextOutput('track_txt'),
+                                br(),br()
+                                  ),
+                                
+                                tabPanel("Explore boundary", 
+                                  h3('Explore the boundary of Law of Iterated Logarithm'), 
+                                  plotOutput('with')%>% withSpinner(),
+                                  verbatimTextOutput('with_txt'),br(),br(),
+                                  plotOutput('first_time')%>% withSpinner(),
+                                  br(),br(),
+                                  verbatimTextOutput('first_time_txt'),
+                                  br(),br()
+                                )
+                                )
+                                
+                              )#end of main panel 
                             )
                           )
-                          )
+                          ))
 )
-)
+
 
 load('sn_df_all.rda')
 load('sn_df.rda')
@@ -549,13 +557,15 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
 # 
   output$first_time_txt=renderPrint({
     if (input$go==T){
-      max = maxtime1
-    }else{
       max=maxtime()
+    }else{
+      max = maxtime1
     }
     cat(paste0("The plot shows the distribution of the first time Sn/√{nloglog(n)} hits ±√2 boundary. Most of the repeats hit the boundary at the first 10 samples. And all of the repeats would hit the ±√2 boundary before samples size become ",max,". In theory, the expected value of the first the statistic hits the boundary is infinity, and the same is true for the maxmium value"))
     })
 
+
+  
   output$summary <- renderPrint({
     if(input$dist == 'normal'){
       cat('Data is generated from normal distribution with mean =',input$mean,'and standard deviation =',input$sd)
