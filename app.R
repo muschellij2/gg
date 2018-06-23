@@ -106,6 +106,7 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                 
                                 tabPanel("Single replicate", 
                                 h3('Comparison of Sn/n, Sn/√n and Sn/√(nloglog(n)) plots for a single replicate'), 
+                                br(),br(),
                                 plotlyOutput('track')%>% withSpinner(),
                                 br(),br(),
                                 verbatimTextOutput('track_txt'),
@@ -363,7 +364,7 @@ server <- function(input, output) {
     }else{
     shared_longer=df_longer1
     }
-    labels <- c(sn_loglog = 'Sn√(nloglogn) -> [ -√2, √2] ', sn_n = " CLT: Sn/n -> 0",sn_sqrtn='LLN: Sn/√(n) -> N(0,1)')
+    labels <- c(sn_loglog = 'Sn√(nloglogn) -> [ -√2, √2] ', sn_n = " LLN: Sn/n -> 0",sn_sqrtn='CLT: Sn/√(n) -> N(0,1)')
     gfac=ggplot(shared_longer, aes(n, value,group = replicate)) +
       geom_line(alpha=0.5,color='lightblue') +
       facet_wrap(~type, scales = "free_x", ncol = 1,labeller = labeller(type=labels))+
@@ -407,29 +408,28 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
     Type[dat$type=='sn_sqrtn'] = "Sn/√n"
     Type[dat$type=='sn_loglog'] = "Sn/√(nloglog(n))"
     Type[dat$type=='sqrtlog'] = "√loglog(n)"
-   g=ggplot(dat,aes(x = n, y = value, colour =Type)) +
-       ylab(label="value") +
-       xlab("Sample size n")+
-      ggtitle(paste0('Single replicate ',n.X()))+
-      theme(axis.title=element_text(size=15),
-            axis.text=element_text(size=13),
-            title=element_text(size=18),
-            strip.text = element_text(size = 15),
-            legend.text = element_text(size = 16),
-            legend.position=c(0.9,0.9))+
-      theme(legend.title=element_blank())+
-      scale_x_continuous(breaks=seq(0, 10000, 1000), limits=c(0,10000))+
-      scale_y_continuous(breaks=seq(-3, 3, 0.5), limits=c(-3,3))+
-      scale_fill_manual(values = colorRampPalette(brewer.pal(4, "Accent"))(4)) +
-      geom_line()
-   ggplotly(g)%>%
-     layout(legend = list(orientation = "h",   # show entries horizontally
-                          xanchor = "center",  # use center of legend as anchor
-                          y = -0.5),font = list(size = 5)   )
+    
+   plot_ly(dat, x = ~n, y = ~value,type = 'scatter', mode = 'lines',
+           color = Type,colors='Set3')%>%
+   layout(title =  paste0('Single replicate ',n.X()),
+          xaxis = list(
+            title = "Sample size n",
+            showticklabels = FALSE,
+            tickfont = list(
+              size = 30,
+              color = 'rgb(107, 107, 107)')),
+          yaxis = list(
+            title = 'Gene expression',
+            titlefont = list(
+              size = 20,
+              color = 'rgb(107, 107, 107)'),
+            tickfont = list(
+              size = 15,
+              color = 'rgb(107, 107, 107)')))
    })
 
   output$track_txt=renderPrint({
-    cat(paste0('The plot shows the Sum Sn divided by n, √n and √{nloglog(n)} for the replicate',n.X(),'. For a single replicate, the plot of Sn/n is almost constant at 0; Sn/√n and Sn/√(nloglog(n)) has similar trend. Both of them oscillate when the sample size is small. As the sample size gets larger, they become more stable and Sn/√(nloglog(n)) would be closer to 0.'))
+    cat(paste0('The plot shows the Sum Sn divided by n, √n and √{nloglog(n)} for the replicate ',n.X(),'. For a single replicate, the plot of √(nloglog(n) increases fast at beginning and quite slowly later; Sn/n is almost constant at 0; Sn/√n and Sn/√(nloglog(n)) has similar trend. Both of them oscillate when the sample size is small. As the sample size gets larger, they become more stable and Sn/√(nloglog(n)) would be closer to 0.'))
   })
   
   output$plot2=renderPlot({
@@ -451,6 +451,7 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
                           length.out = 10))
   })
 
+  
   output$plot3=renderPlot({
     if (input$go==T){
       data = sn_last_n()
@@ -511,7 +512,7 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
     }
     un = unique(data$n)
     cat(paste0('The histograms shows Sn/√{nloglog(n)}, Sn/n, Sn/√n, Sn at n = ',un,
-               ', which would be approximate normal distribution as n gets larger.'))
+               '. Sn/√n would be approximate normal distribution as n gets larger.'))
   })
 
 
@@ -536,7 +537,7 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
 
 
   output$with_txt=renderPrint({
-    cat('The plot shows the proportion of Sn/√{nloglog(n)} that are bounded within ±√2. The proportion oscillate at small sample size and become more stable as sample size gets larger. The reason why the proportion does not reach 1 is that there might be some errors in the simulation.')
+    cat('The plot shows the proportion of Sn/√{nloglog(n)} that are bounded within ±√2. The proportion oscillate at small sample size and become more stable as sample size gets larger. The reason why the proportion does not reach 1 is that the simulation has finite sample size so we have no guarantee that it would be within the boundary.')
   })
 
 
