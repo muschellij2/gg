@@ -10,14 +10,6 @@ library(dplyr)
 library(gridExtra)
 library(shinycssloaders)
 library(grDevices)
-
-# load(file='sn_df_all.rda')
-# load(file='sn_df.rda')
-# load(file='df_long.rda')
-# load(file='time.rda')
-# load(file='within.rda')
-
-
 ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                           tabPanel("Descriptions", fluidPage(
                             uiOutput('descriptions')
@@ -107,7 +99,6 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                   splitLayout(cellWidths = c("50%", "50%"), plotOutput('plot3')%>% withSpinner(), plotOutput('plot5')%>% withSpinner())
                                 ),
                                 
-
                                 verbatimTextOutput('plot4_txt'),
                                 br(),br()
                               #  h4('With simulations, we can find out that the as n gets infinity, Sn/√(nloglog(n)) would oscillates between ±√2, by the law of iterated logarithm')
@@ -262,7 +253,6 @@ server <- function(input, output) {
   })
 
   
-
   sn_df_all=eventReactive (input$go,{
       df = data_sn()
       df = data.frame(df, n = 1:nrow(df))
@@ -276,13 +266,11 @@ server <- function(input, output) {
       names(long)[names(long) == 'variable'] <- 'replicate'
       long
   })
-
   sn_df=eventReactive (input$go,{
       long=sn_df_all()
       long = long[ (long$n %% 50 == 0),]
       long
   })
-
 #   #
   df_long =eventReactive (input$go,{
       long=sn_df()
@@ -291,7 +279,7 @@ server <- function(input, output) {
         gather(type, value = value, sn_n, sn_sqrtn, sn_loglog)
       longer
   })
-
+# 
   time = eventReactive (input$go,{
 
       long = sn_df_all()
@@ -396,7 +384,6 @@ server <- function(input, output) {
 
 
 
-
   output$plot1_txt=renderPrint({
     cat('The plot shows the sum Sn divided by √nloglog(n), divided by n,divided by √n of the replicates.
 
@@ -404,14 +391,13 @@ Sn/√nloglog(n) would oscillate between ±√2.
 
 Sn/n would be close to 0 as n gets larger. By the law of large number we have Sn/n → 0 almost surely.
 
-Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.'
+Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.')
   })
 # 
 # 
 # 
   output$track=renderPlotly({
-
-    if (input$go==TRUE){
+    if (input$go==T){
       dat=track_single()
     }else{
       dat=track_single1()
@@ -447,7 +433,7 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
   })
   
   output$plot2=renderPlot({
-    if (input$go==TRUE){
+    if (input$go==T){
       data = sn_last_n()
       hist_lim = hist_lims()
     }else{
@@ -517,9 +503,9 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
          breaks = seq(min(data$sn), max(data$sn),
                       length.out = 10))
   })
-
+# 
   output$plot4_txt=renderPrint({
-    if (input$go==TRUE){
+    if (input$go==T){
       data = sn_last_n()
     }else{
       data = sn_last_n1()
@@ -532,7 +518,7 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
 
 
   output$with=renderPlot({
-    if (input$go==TRUE){
+    if (input$go==T){
       dat = within()
     }else{
       dat = within1
@@ -568,7 +554,6 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
          cex.lab=2, cex.axis=2, cex.main=2,
          cex.sub=2,col='blue',
          breaks=30)
-
    })
 # 
   output$first_time_txt=renderPrint({
