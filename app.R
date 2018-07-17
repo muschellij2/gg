@@ -10,6 +10,8 @@ library(dplyr)
 library(gridExtra)
 library(shinycssloaders)
 library(grDevices)
+library(devtools)  
+#install_github("ropensci/plotly")
 ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                           tabPanel("Descriptions", fluidPage(
                             uiOutput('descriptions')
@@ -131,7 +133,11 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
 )
 
 
-load('sn_df_all.rda')
+load('sn_df_all_1.rda')
+load('sn_df_all_2.rda')
+load('sn_df_all_3.rda')
+load('sn_df_all_4.rda')
+#load('sn_df_all.rda')
 load('sn_df.rda')
 load('df_long.rda')
 load('time.rda')
@@ -140,7 +146,7 @@ server <- function(input, output) {
   
   ##default
   time1=time
-  sn_df_all1=sn_df_all
+  sn_df_all1=rbind(sn_df_all_1,sn_df_all_2,sn_df_all_3,sn_df_all_4)
   sn_df1=sn_df
   within1=within
   df_long1=df_long
@@ -364,7 +370,7 @@ server <- function(input, output) {
     }else{
     shared_longer=df_longer1
     }
-    labels <- c(sn_loglog = 'Sn√(nloglogn) -> [ -√2, √2] ', sn_n = " LLN: Sn/n -> 0",sn_sqrtn='CLT: Sn/√(n) -> N(0,1)')
+    labels <- c(sn_loglog = 'LIL: Sn√(nloglogn) -> [ -√2, √2] ', sn_n = " LLN: Sn/n -> 0",sn_sqrtn='CLT: Sn/√(n) -> N(0,1)')
     gfac=ggplot(shared_longer, aes(n, value,group = replicate)) +
       geom_line(alpha=0.5,color='lightblue') +
       facet_wrap(~type, scales = "free_x", ncol = 1,labeller = labeller(type=labels))+
@@ -393,9 +399,8 @@ Sn/n would be close to 0 as n gets larger. By the law of large number we have Sn
 
 Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.')
   })
-# 
-# 
-# 
+
+  
   output$track=renderPlotly({
     if (input$go==T){
       dat=track_single()
@@ -417,14 +422,6 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
             showticklabels = FALSE,
             tickfont = list(
               size = 30,
-              color = 'rgb(107, 107, 107)')),
-          yaxis = list(
-            title = 'Gene expression',
-            titlefont = list(
-              size = 20,
-              color = 'rgb(107, 107, 107)'),
-            tickfont = list(
-              size = 15,
               color = 'rgb(107, 107, 107)')))
    })
 
@@ -446,7 +443,7 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
     run_hist(data$sn_n,
              main = paste0('Sn/n at n = ', un),
              xlim = hist_lim,xlab='Sn/n',
-             ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue',
+             ylab='Frequency',cex.lab=2,size=5, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue',
              breaks = seq(min(data$sn_n), max(data$sn_n),
                           length.out = 10))
   })
@@ -562,7 +559,7 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
     }else{
       max = maxtime1
     }
-    cat(paste0("The plot shows the distribution of the first time Sn/√{nloglog(n)} hits ±√2 boundary. Most of the repeats hit the boundary at the first 10 samples. And all of the repeats would hit the ±√2 boundary before samples size become ",max,". In theory, the expected value of the first the statistic hits the boundary is infinity, and the same is true for the maxmium value"))
+    cat(paste0("The plot shows the distribution of the first time Sn/√{nloglog(n)} hits ±√2 boundary. Most of the repeats hit the boundary at the first 10 samples. And all of the repeats would hit the ±√2 boundary before samples size become ", max, ". In theory, the expected value of the first the statistic hits the boundary is infinity, and the same is true for the maxmium value"))
     })
 
 
