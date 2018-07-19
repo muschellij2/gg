@@ -132,18 +132,16 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                           ))
 )
 
-
+load('sn_df_all_4.rda')
 load('sn_df_all_1.rda')
 load('sn_df_all_2.rda')
 load('sn_df_all_3.rda')
-load('sn_df_all_4.rda')
-#load('sn_df_all.rda')
+
 load('sn_df.rda')
 load('df_long.rda')
 load('time.rda')
 load('within.rda')
 server <- function(input, output) {
-  
   ##default
   time1=time
   sn_df_all1=rbind(sn_df_all_1,sn_df_all_2,sn_df_all_3,sn_df_all_4)
