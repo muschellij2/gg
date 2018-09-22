@@ -78,7 +78,7 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                 numericInput("nX", "Track single replicate:", value=1, min = 1),
                                 br(),br(),
                                 h4("Sequential experiment"),
-                                numericInput("delta", "Value of significant difference delta:", value=.01, step=0.5,min = 0.0000001),
+                                numericInput("delta", "Value of significant difference delta:", value=.01, step=0.01,min = 0.001),
                                 actionButton('exp','Calculate')
                                 
                               ),
@@ -406,12 +406,9 @@ server <- function(input, output) {
 
   output$plot1_txt=renderPrint({
     cat('The plot shows the sum Sn divided by √nloglog(n), divided by n,divided by √n of the replicates.
-
 Sn/√nloglog(n) would oscillate between ±√2.
-
 Sn/n would be close to 0 as n gets larger. By the law of large number we have Sn/n → 0 almost surely.
-
-Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.')
+        Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the central limit theorem we have Sn/√n converges in distribution to a standard normal random variable.')
   })
 
   
@@ -440,7 +437,11 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
    })
 
   output$track_txt=renderPrint({
-    cat(paste0('The plot shows the Sum Sn divided by n, √n and √{nloglog(n)} for the replicate ',n.X(),'. For a single replicate, the plot of √(nloglog(n) increases fast at beginning and quite slowly later; Sn/n is almost constant at 0; Sn/√n and Sn/√(nloglog(n)) has similar trend. Both of them oscillate when the sample size is small. As the sample size gets larger, they become more stable and Sn/√(nloglog(n)) would be closer to 0.'))
+    cat(paste0('The plot shows the Sum Sn divided by n, √n and √{nloglog(n)} for the replicate ',n.X(),'. 
+For a single replicate, the plot of √(nloglog(n) increases fast at beginning and quite slowly later; 
+Sn/n is almost constant at 0; Sn/√n and Sn/√(nloglog(n)) has similar trend. 
+Both of them oscillate when the sample size is small. 
+               As the sample size gets larger, they become more stable and Sn/√(nloglog(n)) would be closer to 0.'))
   })
   
   output$plot2=renderPlot({
@@ -522,8 +523,8 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
       data = sn_last_n1()
     }
     un = unique(data$n)
-    cat(paste0('The histograms shows Sn/√{nloglog(n)}, Sn/n, Sn/√n, Sn at n = ',un,
-               '. Sn/√n would be approximate normal distribution as n gets larger.'))
+    cat(paste0('The histograms shows Sn/√{nloglog(n)}, Sn/n, Sn/√n, Sn at n = ',un,'.
+               Sn/√n would be approximate normal distribution as n gets larger.'))
   })
 
 
@@ -548,7 +549,9 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
 
 
   output$with_txt=renderPrint({
-    cat('The plot shows the proportion of Sn/√{nloglog(n)} that are bounded within ±√2. The proportion oscillate at small sample size and become more stable as sample size gets larger. The reason why the proportion does not reach 1 is that the simulation has finite sample size so we have no guarantee that it would be within the boundary.')
+    cat('The plot shows the proportion of Sn/√{nloglog(n)} that are bounded within ±√2.
+The proportion oscillate at small sample size and become more stable as sample size gets larger. 
+        The reason why the proportion does not reach 1 is that the simulation has finite sample size so we have no guarantee that it would be within the boundary.')
   })
 
 
@@ -573,7 +576,9 @@ Sn/√n is a continuous distribution and lie roughly between -3 and 3. By the ce
     }else{
       max = maxtime1
     }
-    cat(paste0("The plot shows the distribution of the first time Sn/√{nloglog(n)} hits ±√2 boundary. Most of the repeats hit the boundary at the first 10 samples. And all of the repeats would hit the ±√2 boundary before samples size become ", max, ". In theory, the expected value of the first the statistic hits the boundary is infinity, and the same is true for the maxmium value"))
+    cat(paste0("The plot shows the distribution of the first time Sn/√{nloglog(n)} hits ±√2 boundary.
+Most of the repeats hit the boundary at the first 10 samples. And all of the repeats would hit the ±√2 boundary before samples size become ", max, ". 
+               In theory, the expected value of the first the statistic hits the boundary is infinity, and the same is true for the maxmium value"))
     })
 
   stf_dat = eventReactive(input$exp,{
