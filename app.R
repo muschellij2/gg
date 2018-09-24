@@ -91,7 +91,7 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                            
                                 h1('Instruction'), 
                                 h4("The APP aims to demonstrate the Law of the Iterated Logarithm. Users can select Normal, Bernoulli, Poisson distributions and set up corresponding parameters for random variable generation."),
-                                h4('The simulation generates independent and identically ditributed random variables with user-defined number of replicates.The sum of the random variables Sn are calculated,and Sn are dependent for i =1,2,..n.') ,
+                                h4('The simulation generates independent and identically distributed random variables with user-defined number of replicates.The sum of the random variables Sn are calculated,and Sn are dependent for i =1,2,..n.') ,
                                 br(),br(),
                                 verbatimTextOutput('summary'),
                                  
@@ -458,7 +458,7 @@ Both of them oscillate when the sample size is small.
     run_hist(data$sn_n,
              main = paste0('Sn/n at n = ', un),
              xlim = hist_lim,xlab='Sn/n',
-             ylab='Frequency',cex.lab=2,size=5, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue',
+             ylab='Frequency',cex.lab=2, cex.axis=2, cex.main=2, cex.sub=2,col='lightblue',
              breaks = seq(min(data$sn_n), max(data$sn_n),
                           length.out = 10))
   })
@@ -600,7 +600,7 @@ Most of the repeats hit the boundary at the first 10 samples. And all of the rep
     
     pos = sapply(1:ncol(stf_up), function(i) min(l[i],u[i]))
     hist(pos,
-         main = paste('First time confidence interval does not incluse ',input$delta),
+         main = paste('First time confidence interval does not include ',input$delta),
          xlab='Sample size of first time outside confidence interval',ylab='Frequency',
          cex.lab=2, cex.axis=2, cex.main=2,
          cex.sub=2,col='blue',
