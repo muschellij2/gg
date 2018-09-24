@@ -52,7 +52,7 @@ $$
 \frac{|S_n|}{\sqrt{n \log\log(n)}} \geq \frac{t}{\sqrt{\log\log(n)}}
 $$
 
-The right hand side converges to $0$ as $t$ is constant with respect to $n$. The LIL tells us that $\frac{|S_n|}{\sqrt{n \log\log(n)}}$ will be bounded away from zero as $n \to \infty$.  Thus, we will reject the null hypothesis with probability $1$ as $n \to \infty$ \citep{armitage1967some}. Thu, we would always reject $H_0$ eventually in this sequential testing procedure, even though null hypothesis is true. 
+The right hand side converges to $0$ as $t$ is constant with respect to $n$. The LIL tells us that $\frac{|S_n|}{\sqrt{n \log\log(n)}}$ will be bounded away from zero as $n \to \infty$.  Thus, we will reject the null hypothesis with probability $1$ as $n \to \infty$. Thu, we would always reject $H_0$ eventually in this sequential testing procedure, even though null hypothesis is true. 
 
 However, it is also ensured that we cannot prove any significant difference with probability 1, by the law of iterated logarithm. In the Sampling to Foregone Conclusion tabPanel, user can explore this property by changing the value of significant difference delta. 
 

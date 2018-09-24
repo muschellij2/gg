@@ -131,9 +131,7 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                               
                               tabPanel("Sampling to Foregone Conclusion", 
                                        h3('Sequntial experienment of sampling to foregone conclusion'), 
-                                       h5('The asymptotic property of the law of the iterated logarithm explains sampling to foregone conclusion in sequential analysis. Considering  a sample of independent and identically distributed random variable X with mean 0 and variance 1, Sn is sum of random variable X.  We would reject the null hypothesis theta = 0 with probability 1.'),
-                                       h5('However, for any delta not equals to 0, we cannot guarantee delta would be contained in the confidence interval with the same settings.'),
-                                       h5('Construct sequential confidence intervals and identify the first time that delta is outside of the confidence intervals.'),
+                                       h5('The asymptotic property of the law of the iterated logarithm explains sampling to foregone conclusion in sequential analysis. Considering  a sample of independent and identically distributed random variable X with mean 0 and variance 1, Sn is sum of random variable X.  We would reject the null hypothesis theta = 0 with probability 1. However, for any delta not equals to 0, we cannot guarantee delta would be contained in the confidence interval with the same settings. Construct sequential confidence intervals and identify the first time that delta is outside of the confidence intervals.'),
                                        br(),
                                        verbatimTextOutput('fore_txt'),br(),
                                        plotOutput('fore')%>% withSpinner(),
@@ -154,6 +152,7 @@ load('sn_df_all_2.rda')
 load('sn_df_all_3.rda')
 
 load('sn_df.rda')
+load('stf.rda')
 load('df_long.rda')
 load('time.rda')
 load('within.rda')
@@ -587,17 +586,16 @@ Most of the repeats hit the boundary at the first 10 samples. And all of the rep
       stf_dat
   })
   
+  
   output$fore=renderPlot({
+    if (input$exp==T){
     stf_dat = stf_dat()
+    stf_sn =colCumsums(stf_dat)
     stf_mean = sapply(1:ncol(stf_sn), function(i) stf_sn[,i]/(c(1:nrow(stf_sn))))
     stf_low = sapply(1:ncol(stf_sn), function(i) stf_mean[,i] - qnorm(0.975,0,1)/(c(1:nrow(stf_sn))))
-    stf_mean - qnorm(0.975,0,1)/long$n
     stf_up = sapply(1:ncol(stf_sn), function(i) stf_mean[,i] + qnorm(0.975,0,1)/(c(1:nrow(stf_sn))))
-    
-    
     l = sapply(1:ncol(stf_low), function(i) min(which(stf_low[,i] > input$delta)))
     u = sapply(1:ncol(stf_up), function(i) min(which((stf_up)[,i] < input$delta)))
-    
     pos = sapply(1:ncol(stf_up), function(i) min(l[i],u[i]))
     hist(pos,
          main = paste('First time confidence interval does not incluse ',input$delta),
@@ -605,7 +603,15 @@ Most of the repeats hit the boundary at the first 10 samples. And all of the rep
          cex.lab=2, cex.axis=2, cex.main=2,
          cex.sub=2,col='blue',
          breaks=30)
-  })
+    }else{
+       hist(stf,
+           main = 'First time confidence interval does not incluse 0.01',
+           xlab='Sample size of first time outside confidence interval',ylab='Frequency',
+           cex.lab=2, cex.axis=2, cex.main=2,
+           cex.sub=2,col='blue',
+           breaks=30)
+    }
+    })
   
   output$fore_txt=renderPrint({
     cat(paste0("The plot shows the distribution of the first time confidence interval constructed does not include ", input$delta))
