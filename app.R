@@ -130,7 +130,7 @@ ui <-  shinyUI(navbarPage("Law of Iterated Logarithm",
                                 ),
                               
                               tabPanel("Sampling to Foregone Conclusion", 
-                                       h3('Sequntial experienment of sampling to foregone conclusion'), 
+                                       h3('Sequential experienment of sampling to foregone conclusion'), 
                                        h5('The asymptotic property of the law of the iterated logarithm explains sampling to foregone conclusion in sequential analysis. Considering  a sample of independent and identically distributed random variable X with mean 0 and variance 1, Sn is sum of random variable X.  We would reject the null hypothesis theta = 0 with probability 1. However, for any delta not equals to 0, we cannot guarantee delta would be contained in the confidence interval with the same settings. Construct sequential confidence intervals and identify the first time that delta is outside of the confidence intervals.'),
                                        br(),
                                        verbatimTextOutput('fore_txt'),br(),
